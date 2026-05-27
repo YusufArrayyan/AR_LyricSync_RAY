@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react'
-import { Canvas, useFrame } from '@react-three/fiber'
+import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { Text, DeviceOrientationControls } from '@react-three/drei'
 import {
   XR,
@@ -257,13 +257,45 @@ function ARScene({ audioRef, onAnchorPlaced }) {
 // Komponen: Non-AR Fallback Scene (Magic Window)
 // ─────────────────────────────────────────────
 function FallbackScene({ audioRef }) {
+  const { camera } = useThree()
+  const groupRef = useRef()
+  const [anchored, setAnchored] = useState(false)
+
+  useFrame(() => {
+    if (!anchored && groupRef.current) {
+      // Dapatkan arah depan kamera (di mana user melihat)
+      const dir = new Vector3(0, 0, -1)
+      dir.applyQuaternion(camera.quaternion)
+      
+      // Maju 3 meter
+      dir.multiplyScalar(3)
+      
+      // Hitung posisi baru
+      const pos = camera.position.clone().add(dir)
+      pos.y -= 0.5 // sedikit di bawah level mata
+      
+      groupRef.current.position.copy(pos)
+      // Selalu menghadap kamera
+      groupRef.current.lookAt(camera.position)
+    }
+  })
+
+  useEffect(() => {
+    // Beri waktu 500ms agar sensor Gyroscope kalibrasi arah pertama kali
+    const timer = setTimeout(() => {
+      setAnchored(true)
+    }, 500)
+    return () => clearTimeout(timer)
+  }, [])
+
   return (
     <>
       <ambientLight intensity={1} />
       <DeviceOrientationControls />
-      {/* Lowered the position in fallback to simulate resting on a surface */}
-      <MinimalLyricText position={[0, -0.5, -3]} audioRef={audioRef} />
-      <GlowBase position={[0, -0.7, -3]} />
+      <group ref={groupRef}>
+        <MinimalLyricText position={[0, 0, 0]} audioRef={audioRef} />
+        <GlowBase position={[0, -0.2, 0]} />
+      </group>
     </>
   )
 }
