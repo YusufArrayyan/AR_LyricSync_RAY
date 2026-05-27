@@ -54,7 +54,7 @@ const LYRICS = [
 // URL audio placeholder — ganti dengan file audio Anda
 // Letakkan file .mp3 di folder /public dan gunakan path relatif, contoh: '/audio/song.mp3'
 // Atau gunakan URL CORS-friendly. Contoh di bawah menggunakan placeholder.
-const AUDIO_SRC = '/audio/impostorsyndrome.mp3'
+const AUDIO_SRC = `${import.meta.env.BASE_URL}audio/impostorsyndrome.mp3`
 
 // ─────────────────────────────────────────────
 // Buat XR Store (di luar komponen React)
