@@ -15,7 +15,7 @@
 
 import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
-import { Text } from '@react-three/drei'
+import { Text, DeviceOrientationControls } from '@react-three/drei'
 import {
   XR,
   createXRStore,
@@ -25,7 +25,7 @@ import {
   IfInSessionMode,
   useXR,
 } from '@react-three/xr'
-import { Matrix4, Vector3 } from 'three'
+import { Matrix4, Vector3, VideoTexture, SRGBColorSpace } from 'three'
 
 // ─────────────────────────────────────────────
 // Data lirik — array { time (detik), text }
@@ -373,13 +373,63 @@ function ARScene({ audioRef, onAnchorPlaced }) {
 // Tampil saat tidak dalam sesi AR
 // ─────────────────────────────────────────────
 function FallbackScene({ audioRef }) {
+  const [video, setVideo] = useState(null)
+  
+  useEffect(() => {
+    // Meminta akses ke kamera belakang HP
+    let currentStream = null
+    const initCamera = async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+          video: { facingMode: 'environment' } 
+        })
+        currentStream = stream
+        const vid = document.createElement('video')
+        vid.srcObject = stream
+        vid.playsInline = true
+        vid.autoplay = true
+        vid.muted = true
+        vid.play()
+        setVideo(vid)
+      } catch (err) {
+        console.warn('Kamera gagal diakses untuk mode Fallback', err)
+      }
+    }
+    
+    initCamera()
+    
+    return () => {
+      if (currentStream) {
+        currentStream.getTracks().forEach(track => track.stop())
+      }
+    }
+  }, [])
+
+  const bgTexture = useMemo(() => {
+    if (video) {
+      const tex = new VideoTexture(video)
+      tex.colorSpace = SRGBColorSpace
+      return tex
+    }
+    return null
+  }, [video])
+
   return (
     <>
       <ambientLight intensity={1} />
       <pointLight position={[0, 2, 2]} intensity={0.8} />
-      <NeonLyricText position={[0, 0, -1.5]} audioRef={audioRef} />
-      <GlowRing position={[0, 0, -1.5]} />
-      <FloatingParticles position={[0, 0, -1.5]} />
+      
+      {/* Tampilkan feed kamera sebagai background canvas */}
+      {bgTexture && (
+         <primitive attach="background" object={bgTexture} />
+      )}
+      
+      {/* Menggunakan sensor Gyroscope (Magic Window) */}
+      <DeviceOrientationControls />
+
+      <NeonLyricText position={[0, 0, -3]} audioRef={audioRef} />
+      <GlowRing position={[0, -0.5, -3]} />
+      <FloatingParticles position={[0, 0, -3]} />
     </>
   )
 }
@@ -407,7 +457,19 @@ export default function ARLyricSync() {
   }, [])
 
   // Handler untuk mode fallback (non-AR)
-  const handleFallbackPlay = () => {
+  const handleFallbackPlay = async () => {
+    // Wajib untuk iOS 13+: meminta izin sensor gyroscope dari interaksi pengguna
+    if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+      try {
+        const permission = await DeviceOrientationEvent.requestPermission()
+        if (permission !== 'granted') {
+          console.warn('Izin sensor gerak (Gyroscope) ditolak.')
+        }
+      } catch (err) {
+        console.warn('Gagal meminta izin sensor:', err)
+      }
+    }
+
     if (audioRef.current) {
       if (fallbackPlaying) {
         audioRef.current.pause()
@@ -461,14 +523,16 @@ export default function ARLyricSync() {
               ⚠ WebXR AR tidak tersedia di perangkat ini.
             </p>
             <p style={styles.fallbackHint}>
-              Gunakan browser Chrome di Android atau Safari di iOS 15+ untuk pengalaman AR penuh.
+              Apple Safari (iOS) memblokir WebXR secara bawaan. Namun, Anda masih bisa mencoba mode <strong>"Magic Window AR"</strong>.
+              <br/><br/>
+              Kami akan menggunakan kamera dan sensor gerak HP Anda (Anda harus memberikan Izin jika diminta).
             </p>
             <button
               onClick={handleFallbackPlay}
               style={styles.fallbackButton}
               id="btn-fallback-play"
             >
-              {fallbackPlaying ? '⏸ Pause Preview' : '▶ Preview Lirik (Non-AR)'}
+              {fallbackPlaying ? '⏸ Stop Magic Window' : '✨ Mulai Magic Window AR'}
             </button>
           </div>
         )}
