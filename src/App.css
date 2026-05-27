@@ -1,0 +1,59 @@
+/* ── AR Lyric Sync — Global Styles & Animations ── */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #0a0a1a;
+  font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Animasi pulse untuk status text ── */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* ── Animasi glow untuk tombol placement ── */
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(0, 229, 255, 0.4), 0 0 40px rgba(0, 229, 255, 0.15);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(0, 229, 255, 0.7), 0 0 70px rgba(0, 229, 255, 0.3);
+  }
+}
+
+/* ── Animasi blink untuk indikator playing ── */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.2; }
+}
+
+/* ── Hover effects untuk tombol ── */
+button:hover {
+  transform: scale(1.05);
+  filter: brightness(1.15);
+}
+
+button:active {
+  transform: scale(0.97);
+}
+
+/* ── Smooth transitions global ── */
+button {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ── Scrollbar hide (cross-browser) ── */
+::-webkit-scrollbar {
+  display: none;
+}
