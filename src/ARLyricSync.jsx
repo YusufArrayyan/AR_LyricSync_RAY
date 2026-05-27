@@ -357,7 +357,7 @@ export default function ARLyricSync() {
       />
 
       {/* ── HEADER ── */}
-      {!isInAR && (
+      {!isInAR && !fallbackPlaying && (
         <header className="app-header">
           <h1 className="logo">LYRIC SYNC</h1>
           <p className="subtitle">Minimalist AR Experience</p>
@@ -365,7 +365,7 @@ export default function ARLyricSync() {
       )}
 
       {/* ── CONTROLS ── */}
-      {!isInAR && (
+      {!isInAR && !fallbackPlaying && (
         <main className="app-controls">
           {arSupported === null && (
             <p className="text-muted">Checking compatibility...</p>
@@ -393,16 +393,25 @@ export default function ARLyricSync() {
               <p className="small-text">
                 Try <strong>Magic Window</strong> mode instead. It uses your camera and motion sensors.
               </p>
-              <button onClick={handleFallbackPlay} className={`btn-outline ${fallbackPlaying ? 'active' : ''}`}>
-                {fallbackPlaying ? (
-                  <><Pause size={18} /> Stop Experience</>
-                ) : (
-                  <><Play size={18} /> Start Magic Window</>
-                )}
+              <button onClick={handleFallbackPlay} className="btn-outline">
+                <Play size={18} /> Start Magic Window
               </button>
             </div>
           )}
         </main>
+      )}
+
+      {/* ── MAGIC WINDOW UI OVERLAY ── */}
+      {!isInAR && fallbackPlaying && (
+        <div className="magic-window-overlay">
+          <div className="playing-indicator">
+            <Disc3 size={16} className="spin-anim" />
+            <span>Now Playing</span>
+          </div>
+          <button onClick={handleFallbackPlay} className="btn-stop-magic">
+            <Pause size={18} /> Stop
+          </button>
+        </div>
       )}
 
       {/* ── INSTRUCTION OVERLAY (AR) ── */}
