@@ -1,4 +1,4 @@
-/* ── AR Lyric Sync — Global Styles & Animations ── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
 
 * {
   margin: 0;
@@ -10,50 +10,233 @@ html, body, #root {
   width: 100%;
   height: 100%;
   overflow: hidden;
-  background: #0a0a1a;
-  font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* ── Animasi pulse untuk status text ── */
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
+/* ── Layout ── */
+.app-root {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  transition: background-color 0.5s ease;
+  color: #f3f4f6;
 }
 
-/* ── Animasi glow untuk tombol placement ── */
-@keyframes pulse-glow {
-  0%, 100% {
-    box-shadow: 0 0 20px rgba(0, 229, 255, 0.4), 0 0 40px rgba(0, 229, 255, 0.15);
-  }
-  50% {
-    box-shadow: 0 0 30px rgba(0, 229, 255, 0.7), 0 0 70px rgba(0, 229, 255, 0.3);
-  }
+.solid-bg {
+  background-color: #050505; /* Clean true black/dark gray */
 }
 
-/* ── Animasi blink untuk indikator playing ── */
-@keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.2; }
+.transparent-bg {
+  background-color: transparent;
 }
 
-/* ── Hover effects untuk tombol ── */
-button:hover {
-  transform: scale(1.05);
-  filter: brightness(1.15);
+/* ── HTML Camera Background ── */
+.camera-background {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  object-fit: cover;
+  z-index: -1;
+  pointer-events: none;
 }
 
-button:active {
-  transform: scale(0.97);
+/* ── Header ── */
+.app-header {
+  padding: 40px 24px 20px;
+  text-align: center;
+  z-index: 10;
 }
 
-/* ── Smooth transitions global ── */
+.logo {
+  font-size: 1.2rem;
+  font-weight: 600;
+  letter-spacing: 0.25em;
+  color: #ffffff;
+  margin-bottom: 8px;
+}
+
+.subtitle {
+  font-size: 0.8rem;
+  color: #9ca3af;
+  font-weight: 400;
+  letter-spacing: 0.05em;
+}
+
+/* ── Controls Area ── */
+.app-controls {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 24px;
+  z-index: 10;
+}
+
+.text-muted {
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+/* ── Cards ── */
+.card {
+  background: rgba(25, 25, 25, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: 20px;
+  padding: 32px 24px;
+  text-align: center;
+  max-width: 320px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.card-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+  color: #e5e7eb;
+}
+
+.card h2 {
+  font-size: 1.1rem;
+  font-weight: 500;
+  margin-bottom: 8px;
+  color: #ffffff;
+}
+
+.card p {
+  font-size: 0.9rem;
+  color: #9ca3af;
+  line-height: 1.5;
+  margin-bottom: 24px;
+}
+
+.divider {
+  width: 100%;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.1);
+  margin: 0 0 20px 0;
+}
+
+.small-text {
+  font-size: 0.8rem !important;
+  margin-bottom: 16px !important;
+}
+
+/* ── Buttons ── */
 button {
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 500;
+  padding: 12px 24px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
 }
 
-/* ── Scrollbar hide (cross-browser) ── */
-::-webkit-scrollbar {
-  display: none;
+.btn-primary {
+  background: #ffffff;
+  color: #000000;
+  border: none;
+}
+
+.btn-primary:active {
+  background: #e5e7eb;
+  transform: scale(0.98);
+}
+
+.btn-outline {
+  background: rgba(255, 255, 255, 0.05);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.btn-outline:active {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.btn-outline.active {
+  background: rgba(255, 255, 255, 0.9);
+  color: #000000;
+}
+
+/* ── AR UI Elements ── */
+.ar-instruction {
+  position: absolute;
+  top: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  padding: 10px 20px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  z-index: 100;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.dom-overlay-container {
+  position: fixed;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.playing-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(25, 25, 25, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 10px 20px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.spin-anim {
+  animation: spin 3s linear infinite;
+}
+
+@keyframes spin {
+  100% { transform: rotate(360deg); }
+}
+
+/* ── Canvas Wrapper ── */
+.canvas-wrapper {
+  position: absolute;
+  inset: 0;
+  z-index: 1; /* Below UI (10), Above Video (-1) */
+  pointer-events: none; /* Let clicks pass to UI */
+}
+
+/* Canvas needs pointer-events to interact with 3D objects if needed,
+   but we handle clicks via UI button for placement.
+   For true AR hit testing, the XR overlay handles it natively. */
+.canvas-wrapper > div {
+  pointer-events: auto;
 }
