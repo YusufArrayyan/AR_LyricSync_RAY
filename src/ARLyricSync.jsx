@@ -110,18 +110,30 @@ function MinimalLyricText({ position, audioRef }) {
   const [currentText, setCurrentText] = useState(LYRICS[0].text)
   const baseY = position[1]
 
+  // Start with scale 0 for smooth entrance
+  useEffect(() => {
+    if (textRef.current) {
+      textRef.current.scale.set(0, 0, 0)
+    }
+  }, [])
+
   useFrame((state) => {
     if (!textRef.current) return
     const elapsed = state.clock.getElapsedTime()
     
+    // Smooth scale-in animation
+    textRef.current.scale.lerp(new Vector3(1, 1, 1), 0.05)
+
     // Subtle floating
-    textRef.current.position.y = baseY + Math.sin(elapsed * 2) * 0.015
+    textRef.current.position.y = baseY + Math.sin(elapsed * 2) * 0.02
 
     if (audioRef.current && !audioRef.current.paused) {
       const time = audioRef.current.currentTime
       const newText = getCurrentLyric(time)
       if (newText !== currentText) {
         setCurrentText(newText)
+        // Bouncy pop effect on lyric change
+        textRef.current.scale.set(1.2, 1.2, 1.2)
       }
     }
   })
@@ -130,8 +142,8 @@ function MinimalLyricText({ position, audioRef }) {
     <Text
       ref={textRef}
       position={position}
-      fontSize={0.06}
-      maxWidth={1.2}
+      fontSize={0.15}
+      maxWidth={2.0}
       textAlign="center"
       anchorX="center"
       anchorY="middle"
@@ -249,8 +261,9 @@ function FallbackScene({ audioRef }) {
     <>
       <ambientLight intensity={1} />
       <DeviceOrientationControls />
-      <MinimalLyricText position={[0, 0, -2]} audioRef={audioRef} />
-      <GlowBase position={[0, -0.2, -2]} />
+      {/* Lowered the position in fallback to simulate resting on a surface */}
+      <MinimalLyricText position={[0, -0.5, -3]} audioRef={audioRef} />
+      <GlowBase position={[0, -0.7, -3]} />
     </>
   )
 }
