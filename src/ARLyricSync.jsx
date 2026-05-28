@@ -291,15 +291,17 @@ function FallbackScene({ audioRef }) {
       if (intersects.length > 0) {
         const hit = intersects[0]
         
-        // Target posisi di titik tabrakan, dimajukan sedikit (0.1m) agar tidak tenggelam di tembok
-        const targetPos = hit.point.clone().add(hit.face.normal.clone().multiplyScalar(0.1))
+        // Target posisi di titik tabrakan dinding maya
+        const targetPos = hit.point.clone()
+        // Tarik sedikit ke arah kamera agar tidak nembus/clipping
+        targetPos.lerp(camera.position, 0.05)
         
-        // Target rotasi agar teks sejajar dengan permukaan dinding (menempel)
-        const targetRot = new Quaternion().setFromUnitVectors(new Vector3(0, 0, 1), hit.face.normal)
-        
-        // Gunakan Lerp & Slerp agar pergerakannya mulus ("mencari" permukaan)
+        // Gunakan Lerp agar pergerakannya mulus ("mencari" permukaan dinding)
         groupRef.current.position.lerp(targetPos, 0.1)
-        groupRef.current.quaternion.slerp(targetRot, 0.1)
+        
+        // Pastikan teks SELALU menghadap lurus ke arah kamera agar selalu terbaca
+        // (menghindari teks menjadi gepeng/garis saat melihat lantai atau plafon)
+        groupRef.current.lookAt(camera.position)
       }
     }
   })
