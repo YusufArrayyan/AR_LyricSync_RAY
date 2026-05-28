@@ -9,8 +9,10 @@ import {
   XRDomOverlay,
   IfInSessionMode,
 } from '@react-three/xr'
-import { Matrix4, Vector3 } from 'three'
+import { Matrix4, Vector3, BoxGeometry, MeshBasicMaterial, Mesh, BackSide, Raycaster, Quaternion } from 'three'
 import { Play, Pause, Disc3, Info, Maximize } from 'lucide-react'
+import { EffectComposer, ChromaticAberration, Noise, Bloom, Glitch } from '@react-three/postprocessing'
+import { BlendFunction, GlitchMode } from 'postprocessing'
 
 // ─────────────────────────────────────────────
 // Data lirik — array { time (detik), text }
@@ -36,6 +38,10 @@ const LYRICS = [
   { time: 68, text: '♪ (Instrumental) ♪' },
 ]
 
+// Variabel offset untuk sinkronisasi lirik (dalam detik). 
+// Jika lirik muncul terlambat, gunakan angka negatif.
+const LYRIC_OFFSET = -0.5
+
 const AUDIO_SRC = `${import.meta.env.BASE_URL}audio/impostorsyndrome.mp3`
 
 // ─────────────────────────────────────────────
@@ -52,9 +58,10 @@ const store = createXRStore({
 // Helper: cari lirik berdasarkan waktu audio
 // ─────────────────────────────────────────────
 function getCurrentLyric(currentTime) {
+  const adjustedTime = currentTime - LYRIC_OFFSET
   let result = LYRICS[0]
   for (let i = LYRICS.length - 1; i >= 0; i--) {
-    if (currentTime >= LYRICS[i].time) {
+    if (adjustedTime >= LYRICS[i].time) {
       result = LYRICS[i]
       break
     }
@@ -105,7 +112,7 @@ function HitTestReticle({ onPositionUpdate }) {
 // ─────────────────────────────────────────────
 // Komponen: Minimal Lyric Text
 // ─────────────────────────────────────────────
-function MinimalLyricText({ position, audioRef }) {
+function MinimalLyricText({ position, audioRef, onLyricChange }) {
   const textRef = useRef()
   const [currentText, setCurrentText] = useState(LYRICS[0].text)
   const baseY = position[1]
@@ -121,8 +128,8 @@ function MinimalLyricText({ position, audioRef }) {
     if (!textRef.current) return
     const elapsed = state.clock.getElapsedTime()
     
-    // Smooth scale-in animation
-    textRef.current.scale.lerp(new Vector3(1, 1, 1), 0.05)
+    // Smooth scale-in / bounce-back animation
+    textRef.current.scale.lerp(new Vector3(1, 1, 1), 0.1)
 
     // Subtle floating
     textRef.current.position.y = baseY + Math.sin(elapsed * 2) * 0.02
@@ -133,7 +140,8 @@ function MinimalLyricText({ position, audioRef }) {
       if (newText !== currentText) {
         setCurrentText(newText)
         // Bouncy pop effect on lyric change
-        textRef.current.scale.set(1.2, 1.2, 1.2)
+        textRef.current.scale.set(1.4, 1.4, 1.4)
+        if (onLyricChange) onLyricChange()
       }
     }
   })
@@ -259,37 +267,72 @@ function ARScene({ audioRef, onAnchorPlaced }) {
 function FallbackScene({ audioRef }) {
   const { camera } = useThree()
   const groupRef = useRef()
+  const [glitchActive, setGlitchActive] = useState(false)
+
+  // Buat "ruangan" maya (invisible room) berukuran 6x6x6 meter 
+  // sebagai target raycast agar teks menempel seperti di dinding sungguhan.
+  const roomMesh = useMemo(() => {
+    const geo = new BoxGeometry(6, 6, 6)
+    const mat = new MeshBasicMaterial({ side: BackSide })
+    return new Mesh(geo, mat)
+  }, [])
+  const raycaster = useMemo(() => new Raycaster(), [])
 
   useFrame(() => {
     if (groupRef.current) {
-      // Dapatkan arah depan kamera secara terus-menerus
+      // Dapatkan arah depan kamera
       const dir = new Vector3(0, 0, -1)
       dir.applyQuaternion(camera.quaternion)
       
-      // Jarak teks ke kamera (3 meter)
-      dir.multiplyScalar(3)
+      // Tembakkan raycast dari kamera ke arah depan mengenai "dinding ruangan"
+      raycaster.set(camera.position, dir)
+      const intersects = raycaster.intersectObject(roomMesh)
       
-      // Target posisi tepat di depan kamera
-      const targetPos = camera.position.clone().add(dir)
-      
-      // Buat efek pergerakan yang mulus (smooth tracking/delay) menggunakan Lerp
-      // Angka 0.1 menentukan seberapa cepat teks menyusul gerakan kamera
-      groupRef.current.position.lerp(targetPos, 0.1)
-      
-      // Pastikan teks selalu menghadap ke arah kamera
-      groupRef.current.lookAt(camera.position)
+      if (intersects.length > 0) {
+        const hit = intersects[0]
+        
+        // Target posisi di titik tabrakan, dimajukan sedikit (0.1m) agar tidak tenggelam di tembok
+        const targetPos = hit.point.clone().add(hit.face.normal.clone().multiplyScalar(0.1))
+        
+        // Target rotasi agar teks sejajar dengan permukaan dinding (menempel)
+        const targetRot = new Quaternion().setFromUnitVectors(new Vector3(0, 0, 1), hit.face.normal)
+        
+        // Gunakan Lerp & Slerp agar pergerakannya mulus ("mencari" permukaan)
+        groupRef.current.position.lerp(targetPos, 0.1)
+        groupRef.current.quaternion.slerp(targetRot, 0.1)
+      }
     }
   })
+
+  // Trigger glitch saat lirik berganti
+  const handleLyricChange = useCallback(() => {
+    setGlitchActive(true)
+    setTimeout(() => setGlitchActive(false), 200) // Glitch selama 200ms
+  }, [])
 
   return (
     <>
       <ambientLight intensity={1} />
       <DeviceOrientationControls />
       <group ref={groupRef}>
-        {/* Posisi lokal 0,0,0 karena grup yang digerakkan */}
-        <MinimalLyricText position={[0, 0, 0]} audioRef={audioRef} />
+        {/* Posisi lokal 0,0,0 karena parent group yang bergerak dan berotasi menempel dinding */}
+        <MinimalLyricText position={[0, 0, 0]} audioRef={audioRef} onLyricChange={handleLyricChange} />
         <GlowBase position={[0, -0.2, 0]} />
       </group>
+
+      {/* Efek Spider-Verse (Chromatic Aberration, Noise, Bloom, Glitch) */}
+      <EffectComposer>
+        <ChromaticAberration offset={[0.003, 0.003]} blendFunction={BlendFunction.NORMAL} />
+        <Noise opacity={0.12} blendFunction={BlendFunction.OVERLAY} />
+        <Bloom luminanceThreshold={0.2} mipmapBlur intensity={1.2} />
+        <Glitch 
+          active={glitchActive} 
+          mode={GlitchMode.SPORADIC} 
+          delay={[0, 0]} 
+          duration={[0.1, 0.2]} 
+          strength={[0.2, 0.4]} 
+        />
+      </EffectComposer>
     </>
   )
 }
