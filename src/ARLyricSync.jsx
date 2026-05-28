@@ -448,6 +448,8 @@ export default function ARLyricSync() {
   const [handTrackingReady, setHandTrackingReady] = useState(false)
   
   // State for Spotify UI
+  const [isPlaying, setIsPlaying] = useState(false)
+  const [progress, setProgress] = useState(0)
   const [currentSongIndex, setCurrentSongIndex] = useState(0)
   const currentSong = SONGS[currentSongIndex]
   const duration = currentSong.duration
