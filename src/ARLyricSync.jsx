@@ -250,7 +250,7 @@ function GlowBase({ position }) {
 // ─────────────────────────────────────────────
 // Komponen: AR Scene
 // ─────────────────────────────────────────────
-function ARScene({ audioRef, onAnchorPlaced }) {
+function ARScene({ audioRef, onAnchorPlaced, songLyrics }) {
   const [anchorPos, setAnchorPos] = useState(null)
   const latestHitPos = useRef(null)
   const requestHitTest = useXRRequestHitTest()
@@ -303,7 +303,7 @@ function ARScene({ audioRef, onAnchorPlaced }) {
 
       {anchorPos && (
         <>
-          <MinimalLyricText position={anchorPos} audioRef={audioRef} />
+          <MinimalLyricText position={anchorPos} audioRef={audioRef} songLyrics={songLyrics} />
           <GlowBase position={anchorPos} />
         </>
       )}
@@ -591,16 +591,25 @@ export default function ARLyricSync() {
   // Start HTML Camera background
   const startCamera = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'environment' } 
-      })
+      let stream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ 
+          video: { facingMode: 'environment' } 
+        })
+      } catch (e) {
+        // Fallback jika tidak ada kamera belakang (misal di beberapa browser PC/emulator Android)
+        stream = await navigator.mediaDevices.getUserMedia({ 
+          video: true 
+        })
+      }
+      
       if (videoRef.current) {
         videoRef.current.srcObject = stream
         videoRef.current.play()
         setCameraActive(true)
       }
-    } catch (err) {
-      console.warn('Gagal akses kamera:', err)
+    } catch (error) {
+      console.error("Camera access denied or failed", error)
     }
   }
 
@@ -807,7 +816,7 @@ export default function ARLyricSync() {
           camera={{ position: [0, 0, 0.5], fov: 70 }}
         >
           <XR store={store}>
-            <ARScene audioRef={audioRef} onAnchorPlaced={() => setIsPlaced(true)} />
+            <ARScene audioRef={audioRef} onAnchorPlaced={() => setIsPlaced(true)} songLyrics={currentSong.lyrics} />
           </XR>
 
           {arSupported === false && fallbackPlaying && (
