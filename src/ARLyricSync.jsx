@@ -10,7 +10,8 @@ import {
   IfInSessionMode,
 } from '@react-three/xr'
 import { Matrix4, Vector3 } from 'three'
-import { Play, Pause, Disc3, Info, Maximize, MousePointerClick } from 'lucide-react'
+import { Play, Pause, Disc3, Info, Maximize, MousePointerClick, Hand } from 'lucide-react'
+import { FilesetResolver, HandLandmarker } from '@mediapipe/tasks-vision'
 // ─────────────────────────────────────────────
 // Data lirik — array { time (detik), text }
 // ─────────────────────────────────────────────
@@ -331,24 +332,33 @@ function MusicParticles() {
 // ─────────────────────────────────────────────
 // Komponen: Non-AR Fallback Scene (Magic Window)
 // ─────────────────────────────────────────────
-function FallbackScene({ audioRef, isPlaced }) {
+function FallbackScene({ audioRef, isPlaced, handPosRef }) {
   const { camera } = useThree()
   const groupRef = useRef()
 
   useFrame(() => {
     if (groupRef.current && !isPlaced) {
-      // HANYA IKUTI KAMERA JIKA BELUM DI-PLACE
+      // Mulai dari arah depan tengah
       const dir = new Vector3(0, 0, -1)
+      
+      // Jika tangan terdeteksi, geser arah sesuai posisi tangan
+      if (handPosRef && handPosRef.current) {
+        // Asumsi webcam biasanya di-mirror, kita balik sumbu X-nya
+        dir.x = -handPosRef.current.x * 2.0
+        dir.y = handPosRef.current.y * 2.0
+      }
+      
+      dir.normalize()
       dir.applyQuaternion(camera.quaternion)
-      dir.multiplyScalar(3)
+      dir.multiplyScalar(3) // Jarak 3 meter
       
       const targetPos = camera.position.clone().add(dir)
       
-      // Lerp untuk mengikuti pergerakan kamera secara halus
+      // Lerp untuk mengikuti pergerakan kamera/tangan secara halus
       groupRef.current.position.lerp(targetPos, 0.2)
       groupRef.current.lookAt(camera.position)
     }
-    // Jika isPlaced === true, grup akan diam di posisinya yang terakhir (seperti menempel di udara/ruang)
+    // Jika isPlaced === true, grup akan diam di posisinya yang terakhir
   })
 
   return (
@@ -374,11 +384,71 @@ export default function ARLyricSync() {
   const [isInAR, setIsInAR] = useState(false)
   const [fallbackPlaying, setFallbackPlaying] = useState(false)
   const [cameraActive, setCameraActive] = useState(false)
+  const [handTrackingReady, setHandTrackingReady] = useState(false)
   
   // State for Spotify UI
   const [isPlaying, setIsPlaying] = useState(false)
   const [progress, setProgress] = useState(0)
   const duration = 285 // durasi lagu dalam detik (sekitar 4:45)
+
+  // Hand Tracking Refs
+  const handLandmarkerRef = useRef(null)
+  const handPosRef = useRef(null)
+
+  // Initialize Hand Tracking
+  useEffect(() => {
+    const initHandTracking = async () => {
+      try {
+        const vision = await FilesetResolver.forVisionTasks(
+          "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm"
+        )
+        handLandmarkerRef.current = await HandLandmarker.createFromOptions(vision, {
+          baseOptions: {
+            modelAssetPath: `https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task`,
+            delegate: "GPU"
+          },
+          runningMode: "VIDEO",
+          numHands: 1
+        })
+        setHandTrackingReady(true)
+      } catch (err) {
+        console.error("Gagal memuat Hand Tracking:", err)
+      }
+    }
+    initHandTracking()
+  }, [])
+
+  // Deteksi Tangan setiap frame saat kamera aktif
+  useEffect(() => {
+    if (!cameraActive || !handTrackingReady) return
+    let animationId
+    let lastVideoTime = -1
+
+    const detect = () => {
+      if (videoRef.current && videoRef.current.readyState >= 2 && handLandmarkerRef.current) {
+        const startTimeMs = performance.now()
+        if (lastVideoTime !== videoRef.current.currentTime) {
+          lastVideoTime = videoRef.current.currentTime
+          const results = handLandmarkerRef.current.detectForVideo(videoRef.current, startTimeMs)
+          
+          if (results.landmarks && results.landmarks.length > 0) {
+            // Ambil ujung jari telunjuk (index finger tip, landmark #8)
+            const indexFinger = results.landmarks[0][8]
+            // Ubah koordinat 0..1 menjadi -1..1 (Normalized Device Coordinates)
+            handPosRef.current = {
+              x: (indexFinger.x - 0.5) * 2,
+              y: -(indexFinger.y - 0.5) * 2
+            }
+          } else {
+            handPosRef.current = null
+          }
+        }
+      }
+      animationId = requestAnimationFrame(detect)
+    }
+    detect()
+    return () => cancelAnimationFrame(animationId)
+  }, [cameraActive, handTrackingReady])
 
   // Update progress bar
   useEffect(() => {
@@ -563,7 +633,11 @@ export default function ARLyricSync() {
               <button onClick={handleFallbackPlace} className="btn-primary" style={{ pointerEvents: 'auto' }}>
                 <MousePointerClick size={18} /> Tap to Place Lyrics
               </button>
-              <button onClick={handleFallbackPlay} className="btn-outline" style={{ pointerEvents: 'auto', marginTop: 10 }}>
+              <div style={{ textAlign: 'center', fontSize: '0.8rem', color: handTrackingReady ? '#1db954' : '#b3b3b3' }}>
+                <Hand size={14} style={{ verticalAlign: 'middle', marginRight: 4 }} /> 
+                {handTrackingReady ? "Hand Tracking Active (Angkat tanganmu!)" : "Loading Hand Tracking..."}
+              </div>
+              <button onClick={handleFallbackPlay} className="btn-outline" style={{ pointerEvents: 'auto' }}>
                 Exit
               </button>
             </div>
@@ -618,7 +692,7 @@ export default function ARLyricSync() {
           </XR>
 
           {arSupported === false && fallbackPlaying && (
-            <FallbackScene audioRef={audioRef} isPlaced={isPlaced} />
+            <FallbackScene audioRef={audioRef} isPlaced={isPlaced} handPosRef={handPosRef} />
           )}
         </Canvas>
       </div>
