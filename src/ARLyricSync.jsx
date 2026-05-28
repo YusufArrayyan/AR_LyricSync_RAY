@@ -10,7 +10,7 @@ import {
   IfInSessionMode,
 } from '@react-three/xr'
 import { Matrix4, Vector3 } from 'three'
-import { Play, Pause, Disc3, Info, Maximize, MousePointerClick, Hand, SkipForward } from 'lucide-react'
+import { Play, Pause, Disc3, Info, Maximize, MousePointerClick, Hand, SkipForward, SwitchCamera } from 'lucide-react'
 import { FilesetResolver, GestureRecognizer } from '@mediapipe/tasks-vision'
 // ─────────────────────────────────────────────
 // Data lirik — array { time (detik), text }
@@ -446,6 +446,7 @@ export default function ARLyricSync() {
   const [fallbackPlaying, setFallbackPlaying] = useState(false)
   const [cameraActive, setCameraActive] = useState(false)
   const [handTrackingReady, setHandTrackingReady] = useState(false)
+  const [isFrontCamera, setIsFrontCamera] = useState(false)
   
   // State for Spotify UI
   const [isPlaying, setIsPlaying] = useState(false)
@@ -591,12 +592,12 @@ export default function ARLyricSync() {
   }, [])
 
   // Start HTML Camera background
-  const startCamera = async () => {
+  const startCamera = async (useFront = isFrontCamera) => {
     try {
       let stream;
       try {
         stream = await navigator.mediaDevices.getUserMedia({ 
-          video: { facingMode: 'environment' } 
+          video: { facingMode: useFront ? 'user' : 'environment' } 
         })
       } catch (e) {
         // Fallback jika tidak ada kamera belakang (misal di beberapa browser PC/emulator Android)
@@ -622,6 +623,13 @@ export default function ARLyricSync() {
       videoRef.current.srcObject = null
     }
     setCameraActive(false)
+  }
+
+  const toggleCamera = () => {
+    stopCamera()
+    const nextFront = !isFrontCamera
+    setIsFrontCamera(nextFront)
+    startCamera(nextFront)
   }
 
   const handleFallbackPlay = async () => {
@@ -749,6 +757,9 @@ export default function ARLyricSync() {
               <button onClick={handleFallbackPlace} className="btn-primary" style={{ pointerEvents: 'auto' }}>
                 <MousePointerClick size={18} /> Tap to Place Lyrics
               </button>
+              <button onClick={toggleCamera} className="btn-outline" style={{ pointerEvents: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                <SwitchCamera size={18} /> Flip Camera
+              </button>
               <div style={{ textAlign: 'center', fontSize: '0.8rem', color: handTrackingReady ? '#1db954' : '#b3b3b3' }}>
                 <Hand size={14} style={{ verticalAlign: 'middle', marginRight: 4 }} /> 
                 {handTrackingReady ? "Gestures Active (Fist=Mic, Peace=Next, Thumb=Play)" : "Loading Hand Tracking..."}
@@ -789,13 +800,18 @@ export default function ARLyricSync() {
               </div>
 
               <div className="spotify-controls">
-                <button onClick={togglePlayPause} className="spotify-btn-play" style={{ pointerEvents: 'auto' }}>
-                  {isPlaying ? <Pause size={24} color="#000" /> : <Play size={24} color="#000" />}
+                <button onClick={toggleCamera} className="spotify-btn-exit" style={{ pointerEvents: 'auto', border: 'none', background: 'transparent' }} title="Flip Camera">
+                  <SwitchCamera size={24} color="#fff" />
                 </button>
-                <button onClick={handleNextSong} className="spotify-btn-exit" style={{ pointerEvents: 'auto', border: 'none', background: 'transparent' }}>
-                  <SkipForward size={24} color="#fff" />
-                </button>
-                <button onClick={handleFallbackPlay} className="spotify-btn-exit" style={{ pointerEvents: 'auto', marginLeft: 'auto' }}>
+                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                  <button onClick={togglePlayPause} className="spotify-btn-play" style={{ pointerEvents: 'auto' }}>
+                    {isPlaying ? <Pause size={24} color="#000" /> : <Play size={24} color="#000" />}
+                  </button>
+                  <button onClick={handleNextSong} className="spotify-btn-exit" style={{ pointerEvents: 'auto', border: 'none', background: 'transparent' }}>
+                    <SkipForward size={24} color="#fff" />
+                  </button>
+                </div>
+                <button onClick={handleFallbackPlay} className="spotify-btn-exit" style={{ pointerEvents: 'auto' }}>
                   Exit
                 </button>
               </div>
