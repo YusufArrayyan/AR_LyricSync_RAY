@@ -15,24 +15,69 @@ import { Play, Pause, Disc3, Info, Maximize, MousePointerClick } from 'lucide-re
 // Data lirik — array { time (detik), text }
 // ─────────────────────────────────────────────
 const LYRICS = [
-  { time: 0,  text: '♪ (Instrumental Intro) ♪' },
-  { time: 2,  text: '♪ Unfortunately, I am ♪' },
-  { time: 5,  text: '♪ My own dog, my own fur companion ♪' },
-  { time: 8,  text: '♪ My own old lady on a forum ♪' },
-  { time: 11, text: '♪ Who types in glittery decorum ♪' },
-  { time: 14, text: '♪ Unfortunately, I take ♪' },
-  { time: 17, text: '♪ Myself out walking every day and ♪' },
-  { time: 20, text: '♪ I hand my legs to the feet and ♪' },
-  { time: 23, text: '♪ I give my head to the leash ♪' },
-  { time: 27, text: '♪ Every other day, I\'m wondering ♪' },
-  { time: 30, text: '♪ "What\'s a human being gotta be like?" ♪' },
-  { time: 34, text: '♪ "What\'s a way to just be competent?" ♪' },
-  { time: 37, text: '♪ These sweet instincts ruin my life ♪' },
-  { time: 41, text: '♪ Every other day, I\'m wondering ♪' },
-  { time: 44, text: '♪ "Was it a mistake to try and define ♪' },
-  { time: 48, text: '♪ What I\'m certain\'s mad incompetence?" ♪' },
-  { time: 51, text: '♪ These sweet instincts ruin my life ♪' },
-  { time: 56, text: '♪ (Instrumental) ♪' },
+  { time: 0, text: "♪ (Instrumental Intro) ♪" },
+  { time: 2, text: "♪ Unfortunately, I am ♪" },
+  { time: 6, text: "♪ My own dog, my own fur companion ♪" },
+  { time: 10, text: "♪ My own old lady on a forum ♪" },
+  { time: 15, text: "♪ Who types in glittery decorum ♪" },
+  { time: 20, text: "♪ Unfortunately, I take ♪" },
+  { time: 24, text: "♪ Myself out walking every day and ♪" },
+  { time: 28, text: "♪ I hand my legs to the feet and ♪" },
+  { time: 32, text: "♪ I give my head to the leash ♪" },
+  { time: 34, text: "♪ Every other day, I'm wondering ♪" },
+  { time: 39, text: "♪ What's a human being gotta be like? ♪" },
+  { time: 43, text: "♪ What's a way to just be competent? ♪" },
+  { time: 46, text: "♪ These sweet instincts ruin my life ♪" },
+  { time: 52, text: "♪ Every other day, I'm wondering ♪" },
+  { time: 56, text: "♪ Was it a mistake to try and define ♪" },
+  { time: 60, text: "♪ What I'm certain's mad incompetence? ♪" },
+  { time: 64, text: "♪ These sweet instincts ruin my life ♪" },
+  { time: 74, text: "♪ I can't smell well, or tell the time ♪" },
+  { time: 78, text: "♪ Not K through eight, nor K dash nine ♪" },
+  { time: 82, text: "♪ For human, grossly underqualified ♪" },
+  { time: 85, text: "♪ For canine, grossly overqualified ♪" },
+  { time: 90, text: "♪ I don't blend in at PetSmart ♪" },
+  { time: 94, text: "♪ And that truth remains for the Walmart ♪" },
+  { time: 97, text: "♪ 'Cause in either case, they say to me ♪" },
+  { time: 100, text: "♪ What the fuck is lost in aisle three? ♪" },
+  { time: 101, text: "♪ Every other day, I'm wondering ♪" },
+  { time: 105, text: "♪ What's a human being gotta be like? ♪" },
+  { time: 109, text: "♪ What's a way to just be competent? ♪" },
+  { time: 113, text: "♪ These sweet instincts ruin my life ♪" },
+  { time: 114, text: "♪ Every other day, I'm wondering ♪" },
+  { time: 118, text: "♪ Was it a mistake to try and define ♪" },
+  { time: 123, text: "♪ What I'm certain's mad incompetence? ♪" },
+  { time: 128, text: "♪ These sweet instincts ruin my life ♪" },
+  { time: 135, text: "♪ (Da, da-da, da-da, da-da-da) ♪" },
+  { time: 140, text: "♪ (Da, da-da, da-da, da-da-da) ♪" },
+  { time: 144, text: "♪ (Da, da-da, da-da, da-da-da) ♪" },
+  { time: 149, text: "♪ (Da, da-da, da-da, da-da) ♪" },
+  { time: 170, text: "♪ Just watch me, moving far away ♪" },
+  { time: 174, text: "♪ Nobody even knows my name, and ♪" },
+  { time: 178, text: "♪ No one suspects that I'm not fine, and ♪" },
+  { time: 182, text: "♪ Nobody outs behavioral Frankenstein ♪" },
+  { time: 183, text: "♪ Just look at Victor in LA ♪" },
+  { time: 188, text: "♪ And Syd with the Y at U of A ♪" },
+  { time: 192, text: "♪ And all the majors at the labels ♪" },
+  { time: 195, text: "♪ Rebooting soon as I am able ♪" },
+  { time: 198, text: "♪ Every other day, I'm wondering ♪" },
+  { time: 202, text: "♪ What's a human being gotta be like? ♪" },
+  { time: 206, text: "♪ What's a way to just be competent? ♪" },
+  { time: 210, text: "♪ These sweet instincts ruin my life ♪" },
+  { time: 219, text: "♪ Every other day, I'm wondering ♪" },
+  { time: 224, text: "♪ Was it a mistake to try and define ♪" },
+  { time: 229, text: "♪ What I'm certain's mad incompetence? ♪" },
+  { time: 232, text: "♪ These sweet instincts ruin my life ♪" },
+  { time: 235, text: "♪ Da-da-da-da-da-da, da-da-da ♪" },
+  { time: 239, text: "♪ Da-da-da-da-da-da, da-da-da, da ♪" },
+  { time: 244, text: "♪ Da-da-da-da-da-da, da-da-da ♪" },
+  { time: 248, text: "♪ These sweet instincts ruin my life ♪" },
+  { time: 252, text: "♪ Da-da-da-da-da-da, da-da-da ♪" },
+  { time: 256, text: "♪ Da-da-da-da-da-da, da-da-da, da ♪" },
+  { time: 260, text: "♪ Da-da-da-da-da-da, da-da-da ♪" },
+  { time: 264, text: "♪ These sweet instincts ruin my life ♪" },
+  { time: 277, text: "♪ Attention, passengers, we've now reached our destination ♪" },
+  { time: 281, text: "♪ We hope you enjoyed the flight, now have a nice day ♪" }
 ]
 
 // Offset dikembalikan ke 0 karena array LYRICS sudah disesuaikan
@@ -253,6 +298,37 @@ function ARScene({ audioRef, onAnchorPlaced }) {
 }
 
 // ─────────────────────────────────────────────
+// Komponen: Partikel Vibe VR Musik
+// ─────────────────────────────────────────────
+function MusicParticles() {
+  const particlesRef = useRef()
+
+  useFrame((state) => {
+    if (particlesRef.current) {
+      particlesRef.current.rotation.y = state.clock.elapsedTime * 0.05
+      particlesRef.current.rotation.x = Math.sin(state.clock.elapsedTime * 0.1) * 0.1
+    }
+  })
+
+  // Generate titik-titik melayang
+  const particles = useMemo(() => {
+    const arr = []
+    for (let i = 0; i < 150; i++) {
+      const x = (Math.random() - 0.5) * 15
+      const y = (Math.random() - 0.5) * 15
+      const z = (Math.random() - 0.5) * 15
+      arr.push(<mesh key={i} position={[x, y, z]}>
+        <sphereGeometry args={[0.02, 8, 8]} />
+        <meshBasicMaterial color="#ffffff" transparent opacity={Math.random() * 0.5 + 0.1} />
+      </mesh>)
+    }
+    return arr
+  }, [])
+
+  return <group ref={particlesRef}>{particles}</group>
+}
+
+// ─────────────────────────────────────────────
 // Komponen: Non-AR Fallback Scene (Magic Window)
 // ─────────────────────────────────────────────
 function FallbackScene({ audioRef, isPlaced }) {
@@ -279,6 +355,7 @@ function FallbackScene({ audioRef, isPlaced }) {
     <>
       <ambientLight intensity={1} />
       <DeviceOrientationControls />
+      <MusicParticles />
       <group ref={groupRef}>
         <MinimalLyricText position={[0, 0, 0]} audioRef={audioRef} />
       </group>
@@ -297,6 +374,36 @@ export default function ARLyricSync() {
   const [isInAR, setIsInAR] = useState(false)
   const [fallbackPlaying, setFallbackPlaying] = useState(false)
   const [cameraActive, setCameraActive] = useState(false)
+  
+  // State for Spotify UI
+  const [isPlaying, setIsPlaying] = useState(false)
+  const [progress, setProgress] = useState(0)
+  const duration = 285 // durasi lagu dalam detik (sekitar 4:45)
+
+  // Update progress bar
+  useEffect(() => {
+    let animationFrameId;
+    const updateProgress = () => {
+      if (audioRef.current && isPlaying) {
+        setProgress(audioRef.current.currentTime)
+      }
+      animationFrameId = requestAnimationFrame(updateProgress)
+    }
+    if (isPlaying) {
+      updateProgress()
+    }
+    return () => cancelAnimationFrame(animationFrameId)
+  }, [isPlaying])
+
+  const togglePlayPause = () => {
+    if (!audioRef.current) return
+    if (isPlaying) {
+      audioRef.current.pause()
+    } else {
+      audioRef.current.play().catch(() => {})
+    }
+    setIsPlaying(!isPlaying)
+  }
 
   useEffect(() => {
     if (navigator.xr) {
@@ -351,6 +458,7 @@ export default function ARLyricSync() {
         audioRef.current.pause()
         stopCamera()
         setIsPlaced(false)
+        setIsPlaying(false)
       } else {
         // Jangan langsung diputar, tunggu sampai diletakkan (isPlaced = true)
         startCamera()
@@ -364,6 +472,7 @@ export default function ARLyricSync() {
     if (audioRef.current) {
       audioRef.current.currentTime = 0
       audioRef.current.play().catch(() => {})
+      setIsPlaying(true)
     }
   }
 
@@ -374,6 +483,13 @@ export default function ARLyricSync() {
 
   // Hide the solid background if camera is active or in AR
   const isTransparentBg = cameraActive || isInAR
+
+  // Helper untuk format waktu mm:ss
+  const formatTime = (time) => {
+    const mins = Math.floor(time / 60)
+    const secs = Math.floor(time % 60)
+    return `${mins}:${secs < 10 ? '0' : ''}${secs}`
+  }
 
   return (
     <div className={`app-root ${isTransparentBg ? 'transparent-bg' : 'solid-bg'}`}>
@@ -439,22 +555,48 @@ export default function ARLyricSync() {
         </main>
       )}
 
-      {/* ── MAGIC WINDOW UI OVERLAY ── */}
+      {/* ── MAGIC WINDOW UI OVERLAY (SPOTIFY STYLE) ── */}
       {!isInAR && fallbackPlaying && (
-        <div className="magic-window-overlay">
+        <div className="spotify-player-overlay">
           {!isPlaced ? (
-            <button onClick={handleFallbackPlace} className="btn-primary" style={{ pointerEvents: 'auto' }}>
-              <MousePointerClick size={18} /> Tap to Place
-            </button>
+            <div className="spotify-setup">
+              <button onClick={handleFallbackPlace} className="btn-primary" style={{ pointerEvents: 'auto' }}>
+                <MousePointerClick size={18} /> Tap to Place Lyrics
+              </button>
+              <button onClick={handleFallbackPlay} className="btn-outline" style={{ pointerEvents: 'auto', marginTop: 10 }}>
+                Exit
+              </button>
+            </div>
           ) : (
-            <div className="playing-indicator">
-              <Disc3 size={16} className="spin-anim" />
-              <span>Now Playing</span>
+            <div className="spotify-player">
+              <div className="spotify-header">
+                <div className="spotify-album-art">
+                  <Disc3 size={24} className={isPlaying ? "spin-anim" : ""} />
+                </div>
+                <div className="spotify-song-info">
+                  <h3 className="spotify-title">Impostor Syndrome</h3>
+                  <p className="spotify-artist">Sidney Gish</p>
+                </div>
+              </div>
+
+              <div className="spotify-progress-container">
+                <span className="spotify-time">{formatTime(progress)}</span>
+                <div className="spotify-progress-bar">
+                  <div className="spotify-progress-fill" style={{ width: `${(progress / duration) * 100}%` }}></div>
+                </div>
+                <span className="spotify-time">{formatTime(duration)}</span>
+              </div>
+
+              <div className="spotify-controls">
+                <button onClick={togglePlayPause} className="spotify-btn-play" style={{ pointerEvents: 'auto' }}>
+                  {isPlaying ? <Pause size={24} color="#000" /> : <Play size={24} color="#000" />}
+                </button>
+                <button onClick={handleFallbackPlay} className="spotify-btn-exit" style={{ pointerEvents: 'auto' }}>
+                  Exit
+                </button>
+              </div>
             </div>
           )}
-          <button onClick={handleFallbackPlay} className="btn-stop-magic" style={{ pointerEvents: 'auto' }}>
-            <Pause size={18} /> Exit Magic Window
-          </button>
         </div>
       )}
 

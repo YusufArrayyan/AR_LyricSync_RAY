@@ -241,29 +241,132 @@ button {
   pointer-events: auto;
 }
 
-/* ── Magic Window Fallback Overlay ── */
-.magic-window-overlay {
-  position: fixed;
-  bottom: 40px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 9999;
+/* ── SPOTIFY-STYLE MAGIC WINDOW OVERLAY ── */
+.spotify-player-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  padding: 1rem;
+  z-index: 10;
+  pointer-events: none; /* biarkan klik tembus kecuali di tombol */
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
 }
 
-.btn-stop-magic {
-  background: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: #fff;
-  border-radius: 20px;
-  padding: 10px 24px;
+.spotify-setup {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.spotify-player {
+  width: 100%;
+  max-width: 400px;
+  background: rgba(20, 20, 20, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 16px;
+  padding: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  pointer-events: auto;
+}
+
+.spotify-header {
   display: flex;
   align-items: center;
-  gap: 8px;
-  width: auto;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.spotify-album-art {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #1db954, #191414);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.spotify-song-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.spotify-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: white;
+}
+
+.spotify-artist {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #b3b3b3;
+}
+
+.spotify-progress-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.spotify-time {
+  font-size: 0.75rem;
+  color: #b3b3b3;
+  min-width: 35px;
+}
+
+.spotify-progress-bar {
+  flex: 1;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.spotify-progress-fill {
+  height: 100%;
+  background: white;
+  border-radius: 2px;
+}
+
+.spotify-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.spotify-btn-play {
+  background: white;
+  border: none;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.spotify-btn-play:active {
+  transform: scale(0.95);
+}
+
+.spotify-btn-exit {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  cursor: pointer;
 }
