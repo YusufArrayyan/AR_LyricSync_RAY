@@ -9,38 +9,34 @@ import {
   XRDomOverlay,
   IfInSessionMode,
 } from '@react-three/xr'
-import { Matrix4, Vector3, BoxGeometry, MeshBasicMaterial, Mesh, BackSide, Raycaster, Quaternion } from 'three'
-import { Play, Pause, Disc3, Info, Maximize } from 'lucide-react'
-import { EffectComposer, ChromaticAberration, Noise, Bloom, Glitch } from '@react-three/postprocessing'
-import { BlendFunction, GlitchMode } from 'postprocessing'
-
+import { Matrix4, Vector3 } from 'three'
+import { Play, Pause, Disc3, Info, Maximize, MousePointerClick } from 'lucide-react'
 // ─────────────────────────────────────────────
 // Data lirik — array { time (detik), text }
 // ─────────────────────────────────────────────
 const LYRICS = [
   { time: 0,  text: '♪ (Instrumental Intro) ♪' },
-  { time: 14, text: '♪ Unfortunately, I am ♪' },
-  { time: 17, text: '♪ My own dog, my own fur companion ♪' },
-  { time: 20, text: '♪ My own old lady on a forum ♪' },
-  { time: 23, text: '♪ Who types in glittery decorum ♪' },
-  { time: 26, text: '♪ Unfortunately, I take ♪' },
-  { time: 29, text: '♪ Myself out walking every day and ♪' },
-  { time: 32, text: '♪ I hand my legs to the feet and ♪' },
-  { time: 35, text: '♪ I give my head to the leash ♪' },
-  { time: 39, text: '♪ Every other day, I\'m wondering ♪' },
-  { time: 42, text: '♪ "What\'s a human being gotta be like?" ♪' },
-  { time: 46, text: '♪ "What\'s a way to just be competent?" ♪' },
-  { time: 49, text: '♪ These sweet instincts ruin my life ♪' },
-  { time: 53, text: '♪ Every other day, I\'m wondering ♪' },
-  { time: 56, text: '♪ "Was it a mistake to try and define ♪' },
-  { time: 60, text: '♪ What I\'m certain\'s mad incompetence?" ♪' },
-  { time: 63, text: '♪ These sweet instincts ruin my life ♪' },
-  { time: 68, text: '♪ (Instrumental) ♪' },
+  { time: 2,  text: '♪ Unfortunately, I am ♪' },
+  { time: 5,  text: '♪ My own dog, my own fur companion ♪' },
+  { time: 8,  text: '♪ My own old lady on a forum ♪' },
+  { time: 11, text: '♪ Who types in glittery decorum ♪' },
+  { time: 14, text: '♪ Unfortunately, I take ♪' },
+  { time: 17, text: '♪ Myself out walking every day and ♪' },
+  { time: 20, text: '♪ I hand my legs to the feet and ♪' },
+  { time: 23, text: '♪ I give my head to the leash ♪' },
+  { time: 27, text: '♪ Every other day, I\'m wondering ♪' },
+  { time: 30, text: '♪ "What\'s a human being gotta be like?" ♪' },
+  { time: 34, text: '♪ "What\'s a way to just be competent?" ♪' },
+  { time: 37, text: '♪ These sweet instincts ruin my life ♪' },
+  { time: 41, text: '♪ Every other day, I\'m wondering ♪' },
+  { time: 44, text: '♪ "Was it a mistake to try and define ♪' },
+  { time: 48, text: '♪ What I\'m certain\'s mad incompetence?" ♪' },
+  { time: 51, text: '♪ These sweet instincts ruin my life ♪' },
+  { time: 56, text: '♪ (Instrumental) ♪' },
 ]
 
-// Variabel offset untuk sinkronisasi lirik (dalam detik). 
-// Jika lirik muncul terlambat, gunakan angka negatif.
-const LYRIC_OFFSET = -0.5
+// Offset dikembalikan ke 0 karena array LYRICS sudah disesuaikan
+const LYRIC_OFFSET = 0
 
 const AUDIO_SRC = `${import.meta.env.BASE_URL}audio/impostorsyndrome.mp3`
 
@@ -112,12 +108,11 @@ function HitTestReticle({ onPositionUpdate }) {
 // ─────────────────────────────────────────────
 // Komponen: Minimal Lyric Text
 // ─────────────────────────────────────────────
-function MinimalLyricText({ position, audioRef, onLyricChange }) {
+function MinimalLyricText({ position, audioRef }) {
   const textRef = useRef()
   const [currentText, setCurrentText] = useState(LYRICS[0].text)
   const baseY = position[1]
 
-  // Start with scale 0 for smooth entrance
   useEffect(() => {
     if (textRef.current) {
       textRef.current.scale.set(0, 0, 0)
@@ -128,10 +123,7 @@ function MinimalLyricText({ position, audioRef, onLyricChange }) {
     if (!textRef.current) return
     const elapsed = state.clock.getElapsedTime()
     
-    // Smooth scale-in / bounce-back animation
     textRef.current.scale.lerp(new Vector3(1, 1, 1), 0.1)
-
-    // Subtle floating
     textRef.current.position.y = baseY + Math.sin(elapsed * 2) * 0.02
 
     if (audioRef.current && !audioRef.current.paused) {
@@ -139,9 +131,7 @@ function MinimalLyricText({ position, audioRef, onLyricChange }) {
       const newText = getCurrentLyric(time)
       if (newText !== currentText) {
         setCurrentText(newText)
-        // Bouncy pop effect on lyric change
-        textRef.current.scale.set(1.4, 1.4, 1.4)
-        if (onLyricChange) onLyricChange()
+        textRef.current.scale.set(1.2, 1.2, 1.2)
       }
     }
   })
@@ -150,16 +140,17 @@ function MinimalLyricText({ position, audioRef, onLyricChange }) {
     <Text
       ref={textRef}
       position={position}
-      fontSize={0.15}
-      maxWidth={2.0}
+      fontSize={0.22}
+      maxWidth={2.5}
       textAlign="center"
       anchorX="center"
       anchorY="middle"
       font="https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyeMZhrib2Bg-4.ttf"
       color="#ffffff"
+      outlineWidth={0.015}
+      outlineColor="#000000"
     >
       {currentText}
-      <meshBasicMaterial color="#ffffff" transparent opacity={0.9} />
     </Text>
   )
 }
@@ -264,77 +255,33 @@ function ARScene({ audioRef, onAnchorPlaced }) {
 // ─────────────────────────────────────────────
 // Komponen: Non-AR Fallback Scene (Magic Window)
 // ─────────────────────────────────────────────
-function FallbackScene({ audioRef }) {
+function FallbackScene({ audioRef, isPlaced }) {
   const { camera } = useThree()
   const groupRef = useRef()
-  const [glitchActive, setGlitchActive] = useState(false)
-
-  // Buat "ruangan" maya (invisible room) berukuran 6x6x6 meter 
-  // sebagai target raycast agar teks menempel seperti di dinding sungguhan.
-  const roomMesh = useMemo(() => {
-    const geo = new BoxGeometry(6, 6, 6)
-    const mat = new MeshBasicMaterial({ side: BackSide })
-    return new Mesh(geo, mat)
-  }, [])
-  const raycaster = useMemo(() => new Raycaster(), [])
 
   useFrame(() => {
-    if (groupRef.current) {
-      // Dapatkan arah depan kamera
+    if (groupRef.current && !isPlaced) {
+      // HANYA IKUTI KAMERA JIKA BELUM DI-PLACE
       const dir = new Vector3(0, 0, -1)
       dir.applyQuaternion(camera.quaternion)
+      dir.multiplyScalar(3)
       
-      // Tembakkan raycast dari kamera ke arah depan mengenai "dinding ruangan"
-      raycaster.set(camera.position, dir)
-      const intersects = raycaster.intersectObject(roomMesh)
+      const targetPos = camera.position.clone().add(dir)
       
-      if (intersects.length > 0) {
-        const hit = intersects[0]
-        
-        // Target posisi di titik tabrakan dinding maya
-        const targetPos = hit.point.clone()
-        // Tarik sedikit ke arah kamera agar tidak nembus/clipping
-        targetPos.lerp(camera.position, 0.05)
-        
-        // Gunakan Lerp agar pergerakannya mulus ("mencari" permukaan dinding)
-        groupRef.current.position.lerp(targetPos, 0.1)
-        
-        // Pastikan teks SELALU menghadap lurus ke arah kamera agar selalu terbaca
-        // (menghindari teks menjadi gepeng/garis saat melihat lantai atau plafon)
-        groupRef.current.lookAt(camera.position)
-      }
+      // Lerp untuk mengikuti pergerakan kamera secara halus
+      groupRef.current.position.lerp(targetPos, 0.2)
+      groupRef.current.lookAt(camera.position)
     }
+    // Jika isPlaced === true, grup akan diam di posisinya yang terakhir (seperti menempel di udara/ruang)
   })
-
-  // Trigger glitch saat lirik berganti
-  const handleLyricChange = useCallback(() => {
-    setGlitchActive(true)
-    setTimeout(() => setGlitchActive(false), 200) // Glitch selama 200ms
-  }, [])
 
   return (
     <>
       <ambientLight intensity={1} />
       <DeviceOrientationControls />
       <group ref={groupRef}>
-        {/* Posisi lokal 0,0,0 karena parent group yang bergerak dan berotasi menempel dinding */}
-        <MinimalLyricText position={[0, 0, 0]} audioRef={audioRef} onLyricChange={handleLyricChange} />
-        <GlowBase position={[0, -0.2, 0]} />
+        <MinimalLyricText position={[0, 0, 0]} audioRef={audioRef} />
       </group>
-
-      {/* Efek Spider-Verse (Chromatic Aberration, Noise, Bloom, Glitch) */}
-      <EffectComposer>
-        <ChromaticAberration offset={[0.003, 0.003]} blendFunction={BlendFunction.NORMAL} />
-        <Noise opacity={0.12} blendFunction={BlendFunction.OVERLAY} />
-        <Bloom luminanceThreshold={0.2} mipmapBlur intensity={1.2} />
-        <Glitch 
-          active={glitchActive} 
-          mode={GlitchMode.SPORADIC} 
-          delay={[0, 0]} 
-          duration={[0.1, 0.2]} 
-          strength={[0.2, 0.4]} 
-        />
-      </EffectComposer>
     </>
   )
 }
@@ -388,7 +335,6 @@ export default function ARLyricSync() {
   }
 
   const handleFallbackPlay = async () => {
-    // Gyroscope permission request (Safari iOS)
     if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
       try {
         const permission = await DeviceOrientationEvent.requestPermission()
@@ -404,12 +350,20 @@ export default function ARLyricSync() {
       if (fallbackPlaying) {
         audioRef.current.pause()
         stopCamera()
+        setIsPlaced(false)
       } else {
-        audioRef.current.currentTime = 0
-        audioRef.current.play().catch(() => {})
+        // Jangan langsung diputar, tunggu sampai diletakkan (isPlaced = true)
         startCamera()
       }
       setFallbackPlaying(!fallbackPlaying)
+    }
+  }
+
+  const handleFallbackPlace = () => {
+    setIsPlaced(true)
+    if (audioRef.current) {
+      audioRef.current.currentTime = 0
+      audioRef.current.play().catch(() => {})
     }
   }
 
@@ -488,12 +442,18 @@ export default function ARLyricSync() {
       {/* ── MAGIC WINDOW UI OVERLAY ── */}
       {!isInAR && fallbackPlaying && (
         <div className="magic-window-overlay">
-          <div className="playing-indicator">
-            <Disc3 size={16} className="spin-anim" />
-            <span>Now Playing</span>
-          </div>
-          <button onClick={handleFallbackPlay} className="btn-stop-magic">
-            <Pause size={18} /> Stop
+          {!isPlaced ? (
+            <button onClick={handleFallbackPlace} className="btn-primary" style={{ pointerEvents: 'auto' }}>
+              <MousePointerClick size={18} /> Tap to Place
+            </button>
+          ) : (
+            <div className="playing-indicator">
+              <Disc3 size={16} className="spin-anim" />
+              <span>Now Playing</span>
+            </div>
+          )}
+          <button onClick={handleFallbackPlay} className="btn-stop-magic" style={{ pointerEvents: 'auto' }}>
+            <Pause size={18} /> Exit Magic Window
           </button>
         </div>
       )}
@@ -516,7 +476,7 @@ export default function ARLyricSync() {
           </XR>
 
           {arSupported === false && fallbackPlaying && (
-            <FallbackScene audioRef={audioRef} />
+            <FallbackScene audioRef={audioRef} isPlaced={isPlaced} />
           )}
         </Canvas>
       </div>
