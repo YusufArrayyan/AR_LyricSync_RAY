@@ -10,12 +10,11 @@ import {
   IfInSessionMode,
 } from '@react-three/xr'
 import { Matrix4, Vector3 } from 'three'
-import { Play, Pause, Disc3, Info, Maximize, MousePointerClick, Hand } from 'lucide-react'
-import { FilesetResolver, HandLandmarker } from '@mediapipe/tasks-vision'
+import { Play, Pause, Disc3, Info, Maximize, MousePointerClick, Hand, SkipForward } from 'lucide-react'
+import { FilesetResolver, GestureRecognizer } from '@mediapipe/tasks-vision'
 // ─────────────────────────────────────────────
 // Data lirik — array { time (detik), text }
-// ─────────────────────────────────────────────
-const LYRICS = [
+const LYRICS_IMPOSTOR = [
   { time: 0, text: "♪ (Instrumental Intro) ♪" },
   { time: 2, text: "♪ Unfortunately, I am ♪" },
   { time: 6, text: "♪ My own dog, my own fur companion ♪" },
@@ -81,6 +80,38 @@ const LYRICS = [
   { time: 281, text: "♪ We hope you enjoyed the flight, now have a nice day ♪" }
 ]
 
+const SONGS = [
+  {
+    title: "Impostor Syndrome",
+    artist: "Sidney Gish",
+    src: `${import.meta.env.BASE_URL}audio/impostorsyndrome.mp3`,
+    duration: 285,
+    lyrics: LYRICS_IMPOSTOR
+  },
+  {
+    title: "Shape of You (VR Remix)",
+    artist: "Ed Sheeran (Dummy)",
+    src: `${import.meta.env.BASE_URL}audio/impostorsyndrome.mp3`, // dummy, pakai file sama
+    duration: 285,
+    lyrics: [
+      { time: 0, text: "♪ (Shape of You Beat) ♪" },
+      { time: 5, text: "♪ The club isn't the best place... ♪" },
+      { time: 10, text: "♪ ...to find a lover so the bar is where I go ♪" }
+    ]
+  },
+  {
+    title: "Bohemian Rhapsody",
+    artist: "Queen (Dummy)",
+    src: `${import.meta.env.BASE_URL}audio/impostorsyndrome.mp3`, // dummy
+    duration: 285,
+    lyrics: [
+      { time: 0, text: "♪ Is this the real life? ♪" },
+      { time: 5, text: "♪ Is this just fantasy? ♪" },
+      { time: 10, text: "♪ Caught in a landslide... ♪" }
+    ]
+  }
+]
+
 // Offset dikembalikan ke 0 karena array LYRICS sudah disesuaikan
 const LYRIC_OFFSET = 0
 
@@ -99,12 +130,12 @@ const store = createXRStore({
 // ─────────────────────────────────────────────
 // Helper: cari lirik berdasarkan waktu audio
 // ─────────────────────────────────────────────
-function getCurrentLyric(currentTime) {
+function getCurrentLyric(currentTime, songLyrics) {
   const adjustedTime = currentTime - LYRIC_OFFSET
-  let result = LYRICS[0]
-  for (let i = LYRICS.length - 1; i >= 0; i--) {
-    if (adjustedTime >= LYRICS[i].time) {
-      result = LYRICS[i]
+  let result = songLyrics[0]
+  for (let i = songLyrics.length - 1; i >= 0; i--) {
+    if (adjustedTime >= songLyrics[i].time) {
+      result = songLyrics[i]
       break
     }
   }
@@ -154,16 +185,16 @@ function HitTestReticle({ onPositionUpdate }) {
 // ─────────────────────────────────────────────
 // Komponen: Minimal Lyric Text
 // ─────────────────────────────────────────────
-function MinimalLyricText({ position, audioRef }) {
+function MinimalLyricText({ position, audioRef, songLyrics }) {
   const textRef = useRef()
-  const [currentText, setCurrentText] = useState(LYRICS[0].text)
+  const [currentText, setCurrentText] = useState(songLyrics[0].text)
   const baseY = position[1]
 
   useEffect(() => {
     if (textRef.current) {
       textRef.current.scale.set(0, 0, 0)
     }
-  }, [])
+  }, [songLyrics])
 
   useFrame((state) => {
     if (!textRef.current) return
@@ -174,7 +205,7 @@ function MinimalLyricText({ position, audioRef }) {
 
     if (audioRef.current && !audioRef.current.paused) {
       const time = audioRef.current.currentTime
-      const newText = getCurrentLyric(time)
+      const newText = getCurrentLyric(time, songLyrics)
       if (newText !== currentText) {
         setCurrentText(newText)
         textRef.current.scale.set(1.2, 1.2, 1.2)
@@ -299,6 +330,41 @@ function ARScene({ audioRef, onAnchorPlaced }) {
 }
 
 // ─────────────────────────────────────────────
+// Komponen: Mic Virtual 3D (Muncul saat Genggam Tangan)
+// ─────────────────────────────────────────────
+function Mic3D({ handPosRef, isFist }) {
+  const groupRef = useRef()
+  const { camera } = useThree()
+
+  // Posisi target (default di depan kamera kalau tangan tidak terlihat, tapi dirender transparan)
+  const [visible, setVisible] = useState(false)
+
+  useEffect(() => {
+    setVisible(isFist)
+  }, [isFist])
+
+  useFrame(() => {
+    if (groupRef.current && handPosRef.current && visible) {
+      // Sama dengan logika lirik, tapi lebih dekat (2 meter)
+      const dir = new Vector3(-handPosRef.current.x * 2.0, handPosRef.current.y * 2.0, -1)
+      dir.normalize().applyQuaternion(camera.quaternion).multiplyScalar(2)
+      const targetPos = camera.position.clone().add(dir)
+      groupRef.current.position.lerp(targetPos, 0.4)
+      groupRef.current.lookAt(camera.position)
+    }
+  })
+
+  if (!visible) return null
+
+  return (
+    <group ref={groupRef}>
+      <Text fontSize={0.8} anchorX="center" anchorY="middle">🎤</Text>
+      <pointLight color="#1db954" intensity={2} distance={2} position={[0, 0, 0.5]} />
+    </group>
+  )
+}
+
+// ─────────────────────────────────────────────
 // Komponen: Partikel Vibe VR Musik
 // ─────────────────────────────────────────────
 function MusicParticles() {
@@ -332,33 +398,27 @@ function MusicParticles() {
 // ─────────────────────────────────────────────
 // Komponen: Non-AR Fallback Scene (Magic Window)
 // ─────────────────────────────────────────────
-function FallbackScene({ audioRef, isPlaced, handPosRef }) {
+function FallbackScene({ audioRef, isPlaced, handPosRef, songLyrics, isFist }) {
   const { camera } = useThree()
   const groupRef = useRef()
 
   useFrame(() => {
     if (groupRef.current && !isPlaced) {
-      // Mulai dari arah depan tengah
       const dir = new Vector3(0, 0, -1)
       
-      // Jika tangan terdeteksi, geser arah sesuai posisi tangan
       if (handPosRef && handPosRef.current) {
-        // Asumsi webcam biasanya di-mirror, kita balik sumbu X-nya
         dir.x = -handPosRef.current.x * 2.0
         dir.y = handPosRef.current.y * 2.0
       }
       
       dir.normalize()
       dir.applyQuaternion(camera.quaternion)
-      dir.multiplyScalar(3) // Jarak 3 meter
+      dir.multiplyScalar(3)
       
       const targetPos = camera.position.clone().add(dir)
-      
-      // Lerp untuk mengikuti pergerakan kamera/tangan secara halus
       groupRef.current.position.lerp(targetPos, 0.2)
       groupRef.current.lookAt(camera.position)
     }
-    // Jika isPlaced === true, grup akan diam di posisinya yang terakhir
   })
 
   return (
@@ -366,8 +426,9 @@ function FallbackScene({ audioRef, isPlaced, handPosRef }) {
       <ambientLight intensity={1} />
       <DeviceOrientationControls />
       <MusicParticles />
+      <Mic3D handPosRef={handPosRef} isFist={isFist} />
       <group ref={groupRef}>
-        <MinimalLyricText position={[0, 0, 0]} audioRef={audioRef} />
+        <MinimalLyricText position={[0, 0, 0]} audioRef={audioRef} songLyrics={songLyrics} />
       </group>
     </>
   )
@@ -387,24 +448,27 @@ export default function ARLyricSync() {
   const [handTrackingReady, setHandTrackingReady] = useState(false)
   
   // State for Spotify UI
-  const [isPlaying, setIsPlaying] = useState(false)
-  const [progress, setProgress] = useState(0)
-  const duration = 285 // durasi lagu dalam detik (sekitar 4:45)
+  const [currentSongIndex, setCurrentSongIndex] = useState(0)
+  const currentSong = SONGS[currentSongIndex]
+  const duration = currentSong.duration
 
-  // Hand Tracking Refs
-  const handLandmarkerRef = useRef(null)
+  // Hand Tracking & Gesture Refs
+  const recognizerRef = useRef(null)
   const handPosRef = useRef(null)
+  const [detectedGesture, setDetectedGesture] = useState("None")
+  const lastGestureRef = useRef("None")
+  const [gestureFeedback, setGestureFeedback] = useState("")
 
-  // Initialize Hand Tracking
+  // Initialize Gesture Tracking
   useEffect(() => {
-    const initHandTracking = async () => {
+    const initTracking = async () => {
       try {
         const vision = await FilesetResolver.forVisionTasks(
           "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm"
         )
-        handLandmarkerRef.current = await HandLandmarker.createFromOptions(vision, {
+        recognizerRef.current = await GestureRecognizer.createFromOptions(vision, {
           baseOptions: {
-            modelAssetPath: `https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task`,
+            modelAssetPath: `https://storage.googleapis.com/mediapipe-models/gesture_recognizer/gesture_recognizer/float16/1/gesture_recognizer.task`,
             delegate: "GPU"
           },
           runningMode: "VIDEO",
@@ -412,35 +476,39 @@ export default function ARLyricSync() {
         })
         setHandTrackingReady(true)
       } catch (err) {
-        console.error("Gagal memuat Hand Tracking:", err)
+        console.error("Gagal memuat Gesture Tracking:", err)
       }
     }
-    initHandTracking()
+    initTracking()
   }, [])
 
-  // Deteksi Tangan setiap frame saat kamera aktif
+  // Deteksi Gerakan Tangan
   useEffect(() => {
     if (!cameraActive || !handTrackingReady) return
     let animationId
     let lastVideoTime = -1
 
     const detect = () => {
-      if (videoRef.current && videoRef.current.readyState >= 2 && handLandmarkerRef.current) {
+      if (videoRef.current && videoRef.current.readyState >= 2 && recognizerRef.current) {
         const startTimeMs = performance.now()
         if (lastVideoTime !== videoRef.current.currentTime) {
           lastVideoTime = videoRef.current.currentTime
-          const results = handLandmarkerRef.current.detectForVideo(videoRef.current, startTimeMs)
+          const results = recognizerRef.current.recognizeForVideo(videoRef.current, startTimeMs)
           
           if (results.landmarks && results.landmarks.length > 0) {
-            // Ambil ujung jari telunjuk (index finger tip, landmark #8)
             const indexFinger = results.landmarks[0][8]
-            // Ubah koordinat 0..1 menjadi -1..1 (Normalized Device Coordinates)
             handPosRef.current = {
               x: (indexFinger.x - 0.5) * 2,
               y: -(indexFinger.y - 0.5) * 2
             }
+            if (results.gestures && results.gestures.length > 0) {
+              setDetectedGesture(results.gestures[0][0].categoryName)
+            } else {
+              setDetectedGesture("None")
+            }
           } else {
             handPosRef.current = null
+            setDetectedGesture("None")
           }
         }
       }
@@ -449,6 +517,40 @@ export default function ARLyricSync() {
     detect()
     return () => cancelAnimationFrame(animationId)
   }, [cameraActive, handTrackingReady])
+
+  // Handle Gesture Actions (Debounced)
+  useEffect(() => {
+    const gesture = detectedGesture
+    if (gesture !== lastGestureRef.current) {
+      if (gesture === "Victory") {
+        // Peace Sign -> Next Song
+        handleNextSong()
+        showFeedback("✌️ Next Song!")
+      } else if (gesture === "Thumb_Up") {
+        // Thumb Up -> Play / Pause
+        togglePlayPause()
+        showFeedback("👍 Play / Pause")
+      }
+    }
+    lastGestureRef.current = gesture
+  }, [detectedGesture])
+
+  const showFeedback = (text) => {
+    setGestureFeedback(text)
+    setTimeout(() => setGestureFeedback(""), 2000)
+  }
+
+  const handleNextSong = () => {
+    const nextIdx = (currentSongIndex + 1) % SONGS.length
+    setCurrentSongIndex(nextIdx)
+    if (audioRef.current) {
+      // Dalam implementasi nyata, ganti src audio di sini. Karena kita pakai audio yang sama (dummy), kita reset waktu.
+      audioRef.current.currentTime = 0
+      if (isPlaying) {
+        audioRef.current.play().catch(()=>{})
+      }
+    }
+  }
 
   // Update progress bar
   useEffect(() => {
@@ -565,10 +667,13 @@ export default function ARLyricSync() {
     <div className={`app-root ${isTransparentBg ? 'transparent-bg' : 'solid-bg'}`}>
       <audio
         ref={audioRef}
-        src={AUDIO_SRC}
+        src={currentSong.src}
         preload="auto"
         crossOrigin="anonymous"
-        loop
+        onEnded={() => {
+          setIsPlaying(false)
+          handleNextSong() // Auto play next song
+        }}
       />
 
       {/* HTML Video Background for Fallback Mode */}
@@ -635,8 +740,13 @@ export default function ARLyricSync() {
               </button>
               <div style={{ textAlign: 'center', fontSize: '0.8rem', color: handTrackingReady ? '#1db954' : '#b3b3b3' }}>
                 <Hand size={14} style={{ verticalAlign: 'middle', marginRight: 4 }} /> 
-                {handTrackingReady ? "Hand Tracking Active (Angkat tanganmu!)" : "Loading Hand Tracking..."}
+                {handTrackingReady ? "Gestures Active (Fist=Mic, Peace=Next, Thumb=Play)" : "Loading Hand Tracking..."}
               </div>
+              {gestureFeedback && (
+                <div style={{ background: '#1db954', color: '#fff', padding: '5px 10px', borderRadius: 20, fontSize: '0.8rem', fontWeight: 'bold' }}>
+                  {gestureFeedback}
+                </div>
+              )}
               <button onClick={handleFallbackPlay} className="btn-outline" style={{ pointerEvents: 'auto' }}>
                 Exit
               </button>
@@ -648,9 +758,15 @@ export default function ARLyricSync() {
                   <Disc3 size={24} className={isPlaying ? "spin-anim" : ""} />
                 </div>
                 <div className="spotify-song-info">
-                  <h3 className="spotify-title">Impostor Syndrome</h3>
-                  <p className="spotify-artist">Sidney Gish</p>
+                  <h3 className="spotify-title">{currentSong.title}</h3>
+                  <p className="spotify-artist">{currentSong.artist}</p>
                 </div>
+                {/* Visual Feedback for Gestures inside player too */}
+                {gestureFeedback && (
+                  <div style={{ marginLeft: 'auto', background: '#1db954', color: '#fff', padding: '4px 8px', borderRadius: 10, fontSize: '0.7rem', fontWeight: 'bold' }}>
+                    {gestureFeedback}
+                  </div>
+                )}
               </div>
 
               <div className="spotify-progress-container">
@@ -665,7 +781,10 @@ export default function ARLyricSync() {
                 <button onClick={togglePlayPause} className="spotify-btn-play" style={{ pointerEvents: 'auto' }}>
                   {isPlaying ? <Pause size={24} color="#000" /> : <Play size={24} color="#000" />}
                 </button>
-                <button onClick={handleFallbackPlay} className="spotify-btn-exit" style={{ pointerEvents: 'auto' }}>
+                <button onClick={handleNextSong} className="spotify-btn-exit" style={{ pointerEvents: 'auto', border: 'none', background: 'transparent' }}>
+                  <SkipForward size={24} color="#fff" />
+                </button>
+                <button onClick={handleFallbackPlay} className="spotify-btn-exit" style={{ pointerEvents: 'auto', marginLeft: 'auto' }}>
                   Exit
                 </button>
               </div>
@@ -692,7 +811,13 @@ export default function ARLyricSync() {
           </XR>
 
           {arSupported === false && fallbackPlaying && (
-            <FallbackScene audioRef={audioRef} isPlaced={isPlaced} handPosRef={handPosRef} />
+            <FallbackScene 
+              audioRef={audioRef} 
+              isPlaced={isPlaced} 
+              handPosRef={handPosRef} 
+              songLyrics={currentSong.lyrics}
+              isFist={detectedGesture === "Closed_Fist"}
+            />
           )}
         </Canvas>
       </div>
