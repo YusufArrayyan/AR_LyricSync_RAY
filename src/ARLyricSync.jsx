@@ -259,40 +259,34 @@ function ARScene({ audioRef, onAnchorPlaced }) {
 function FallbackScene({ audioRef }) {
   const { camera } = useThree()
   const groupRef = useRef()
-  const [anchored, setAnchored] = useState(false)
 
   useFrame(() => {
-    if (!anchored && groupRef.current) {
-      // Dapatkan arah depan kamera (di mana user melihat)
+    if (groupRef.current) {
+      // Dapatkan arah depan kamera secara terus-menerus
       const dir = new Vector3(0, 0, -1)
       dir.applyQuaternion(camera.quaternion)
       
-      // Maju 3 meter
+      // Jarak teks ke kamera (3 meter)
       dir.multiplyScalar(3)
       
-      // Hitung posisi baru
-      const pos = camera.position.clone().add(dir)
-      pos.y -= 0.5 // sedikit di bawah level mata
+      // Target posisi tepat di depan kamera
+      const targetPos = camera.position.clone().add(dir)
       
-      groupRef.current.position.copy(pos)
-      // Selalu menghadap kamera
+      // Buat efek pergerakan yang mulus (smooth tracking/delay) menggunakan Lerp
+      // Angka 0.1 menentukan seberapa cepat teks menyusul gerakan kamera
+      groupRef.current.position.lerp(targetPos, 0.1)
+      
+      // Pastikan teks selalu menghadap ke arah kamera
       groupRef.current.lookAt(camera.position)
     }
   })
-
-  useEffect(() => {
-    // Beri waktu 500ms agar sensor Gyroscope kalibrasi arah pertama kali
-    const timer = setTimeout(() => {
-      setAnchored(true)
-    }, 500)
-    return () => clearTimeout(timer)
-  }, [])
 
   return (
     <>
       <ambientLight intensity={1} />
       <DeviceOrientationControls />
       <group ref={groupRef}>
+        {/* Posisi lokal 0,0,0 karena grup yang digerakkan */}
         <MinimalLyricText position={[0, 0, 0]} audioRef={audioRef} />
         <GlowBase position={[0, -0.2, 0]} />
       </group>
