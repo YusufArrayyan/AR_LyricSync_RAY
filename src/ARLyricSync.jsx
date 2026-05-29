@@ -1,6 +1,6 @@
-import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react'
+import React, { useState, useRef, useCallback, useEffect, useMemo, Suspense } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { Text, DeviceOrientationControls } from '@react-three/drei'
+import { Text, DeviceOrientationControls, Text3D, Center, Float, useMatcapTexture } from '@react-three/drei'
 import {
   XR,
   createXRStore,
@@ -250,50 +250,77 @@ function HitTestReticle({ onPositionUpdate }) {
 // ─────────────────────────────────────────────
 // Komponen: Minimal Lyric Text
 // ─────────────────────────────────────────────
+function formatLyricFor3D(text, maxChars) {
+  const cleanText = text.replace(/♪/g, '').trim()
+  const words = cleanText.split(' ')
+  let lines = []
+  let currentLine = ''
+  words.forEach(word => {
+    if ((currentLine + word).length > maxChars) {
+      lines.push(currentLine.trim())
+      currentLine = word + ' '
+    } else {
+      currentLine += word + ' '
+    }
+  })
+  if (currentLine) lines.push(currentLine.trim())
+  return lines.join('\n')
+}
+
 function MinimalLyricText({ position, audioRef, songLyrics, lyricOffset = 0 }) {
-  const textRef = useRef()
+  const groupRef = useRef()
   const [currentText, setCurrentText] = useState(songLyrics[0].text)
-  const baseY = position[1]
+
+  // C7C7D7_4C4E5A_818393_6C6C74 = Silver/Metal, 512 = resolusi
+  const [matcapTexture] = useMatcapTexture('C7C7D7_4C4E5A_818393_6C6C74', 512)
 
   useEffect(() => {
-    if (textRef.current) {
-      textRef.current.scale.set(0, 0, 0)
+    if (groupRef.current) {
+      groupRef.current.scale.set(0, 0, 0)
     }
   }, [songLyrics])
 
   useFrame((state) => {
-    if (!textRef.current) return
-    const elapsed = state.clock.getElapsedTime()
-    
-    textRef.current.scale.lerp(new Vector3(1, 1, 1), 0.1)
-    textRef.current.position.y = baseY + Math.sin(elapsed * 2) * 0.02
+    if (!groupRef.current) return
+    groupRef.current.scale.lerp(new Vector3(1, 1, 1), 0.1)
 
     if (audioRef.current && !audioRef.current.paused) {
       const time = audioRef.current.currentTime
       const newText = getCurrentLyric(time, songLyrics, lyricOffset)
       if (newText !== currentText) {
         setCurrentText(newText)
-        textRef.current.scale.set(1.2, 1.2, 1.2)
+        groupRef.current.scale.set(1.3, 1.3, 1.3)
       }
     }
   })
 
+  const wrappedText = useMemo(() => formatLyricFor3D(currentText, 20), [currentText])
+
+  if (!wrappedText) return null
+
   return (
-    <Text
-      ref={textRef}
-      position={position}
-      fontSize={0.22}
-      maxWidth={2.5}
-      textAlign="center"
-      anchorX="center"
-      anchorY="middle"
-      font="https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyeMZhrib2Bg-4.ttf"
-      color="#ffffff"
-      outlineWidth={0.015}
-      outlineColor="#000000"
-    >
-      {currentText}
-    </Text>
+    <group position={position}>
+      <Float speed={2} rotationIntensity={0.1} floatIntensity={0.2} floatingRange={[-0.05, 0.05]}>
+        <Center ref={groupRef}>
+          <Text3D
+            font="https://raw.githubusercontent.com/mrdoob/three.js/master/examples/fonts/helvetiker_bold.typeface.json"
+            size={0.15}
+            height={0.04}
+            curveSegments={12}
+            bevelEnabled
+            bevelThickness={0.01}
+            bevelSize={0.005}
+            bevelOffset={0}
+            bevelSegments={3}
+            lineHeight={1.5}
+            textAlign="center"
+          >
+            {wrappedText}
+            <meshMatcapMaterial matcap={matcapTexture} />
+          </Text3D>
+        </Center>
+      </Float>
+    </group>
   )
 }
 
@@ -972,29 +999,31 @@ export default function ARLyricSync() {
           gl={{ antialias: true, alpha: true }}
           camera={{ position: [0, 0, 0.5], fov: 70 }}
         >
-          <XR store={store}>
-            <ARScene 
-              audioRef={audioRef} 
-              onAnchorPlaced={() => setIsPlaced(true)} 
-              songLyrics={currentSong.lyrics} 
-              showSaturn={currentSong.title === "Saturn"}
-              showParticles={currentSong.title !== "Saturn"}
-              lyricOffset={currentSong.lyricOffset || 0}
-            />
-          </XR>
+          <Suspense fallback={null}>
+            <XR store={store}>
+              <ARScene 
+                audioRef={audioRef} 
+                onAnchorPlaced={() => setIsPlaced(true)} 
+                songLyrics={currentSong.lyrics} 
+                showSaturn={currentSong.title === "Saturn"}
+                showParticles={currentSong.title !== "Saturn"}
+                lyricOffset={currentSong.lyricOffset || 0}
+              />
+            </XR>
 
-          {arSupported === false && fallbackPlaying && (
-            <FallbackScene 
-              audioRef={audioRef} 
-              isPlaced={isPlaced} 
-              handPosRef={handPosRef} 
-              songLyrics={currentSong.lyrics}
-              isFist={detectedGesture === "Closed_Fist"}
-              showSaturn={currentSong.title === "Saturn"}
-              showParticles={currentSong.title !== "Saturn"}
-              lyricOffset={currentSong.lyricOffset || 0}
-            />
-          )}
+            {arSupported === false && fallbackPlaying && (
+              <FallbackScene 
+                audioRef={audioRef} 
+                isPlaced={isPlaced} 
+                handPosRef={handPosRef} 
+                songLyrics={currentSong.lyrics}
+                isFist={detectedGesture === "Closed_Fist"}
+                showSaturn={currentSong.title === "Saturn"}
+                showParticles={currentSong.title !== "Saturn"}
+                lyricOffset={currentSong.lyricOffset || 0}
+              />
+            )}
+          </Suspense>
         </Canvas>
       </div>
     </div>
