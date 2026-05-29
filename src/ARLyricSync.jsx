@@ -330,16 +330,16 @@ function SaturnPlanet() {
 
   // Tempatkan planet Saturnus besar di langit/jauh di belakang
   return (
-    <group position={[0, 4, -10]} rotation={[0.4, 0.2, 0]}>
+    <group position={[0, 1.5, -6]} rotation={[0.4, 0.2, 0]}>
       {/* Planet */}
       <mesh ref={planetRef}>
-        <sphereGeometry args={[2, 32, 32]} />
+        <sphereGeometry args={[1.2, 32, 32]} />
         <meshStandardMaterial color="#d4ac0d" roughness={0.7} />
       </mesh>
       
       {/* Cincin Saturnus */}
       <mesh ref={ringRef} rotation={[Math.PI / 2 + 0.3, 0, 0]}>
-        <ringGeometry args={[2.5, 4.5, 64]} />
+        <ringGeometry args={[1.6, 2.8, 64]} />
         <meshStandardMaterial color="#fcf3cf" side={2} transparent opacity={0.6} />
       </mesh>
     </group>

@@ -72,8 +72,9 @@ html, body, #root {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 20px 24px;
+  padding: 20px 24px 80px;
   z-index: 10;
+  overflow-y: auto;
 }
 
 .text-muted {
