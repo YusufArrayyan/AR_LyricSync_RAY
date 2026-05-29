@@ -80,7 +80,72 @@ const LYRICS_IMPOSTOR = [
   { time: 281, text: "♪ We hope you enjoyed the flight, now have a nice day ♪" }
 ]
 
+const LYRICS_SATURN = [
+  { time: 0, text: "♪ (Instrumental Intro) ♪" },
+  { time: 14, text: "♪ If there's another universe ♪" },
+  { time: 17, text: "♪ Please make some noise (noise) ♪" },
+  { time: 20, text: "♪ Give me a sign (sign) ♪" },
+  { time: 23, text: "♪ This can't be life ♪" },
+  { time: 25, text: "♪ If there's a point to losing love ♪" },
+  { time: 28, text: "♪ Repeating pain (why?) ♪" },
+  { time: 31, text: "♪ It's all the same ♪" },
+  { time: 33, text: "♪ I hate this place ♪" },
+  { time: 36, text: "♪ Stuck in this paradigm ♪" },
+  { time: 39, text: "♪ Don't believe in paradise ♪" },
+  { time: 41, text: "♪ This must be what Hell is like ♪" },
+  { time: 44, text: "♪ There's got to be more, got to be more ♪" },
+  { time: 47, text: "♪ Sick of this head of mine ♪" },
+  { time: 49, text: "♪ Intrusive thoughts, they paralyze ♪" },
+  { time: 52, text: "♪ Nirvana's not as advertised ♪" },
+  { time: 55, text: "♪ There's got to be more, been here before ♪" },
+  { time: 57, text: "♪ Ooh (ooh, ooh) ♪" },
+  { time: 62, text: "♪ Life's better on Saturn ♪" },
+  { time: 68, text: "♪ Got to break this pattern ♪" },
+  { time: 71, text: "♪ Of floating away ♪" },
+  { time: 73, text: "♪ Ooh (ooh, ooh) ♪" },
+  { time: 79, text: "♪ Find something worth saving ♪" },
+  { time: 84, text: "♪ It's all for the taking ♪" },
+  { time: 87, text: "♪ I always say ♪" },
+  { time: 89, text: "♪ I'll be better on Saturn ♪" },
+  { time: 94, text: "♪ None of this matters ♪" },
+  { time: 99, text: "♪ Dreaming of Saturn, oh ♪" },
+  { time: 106, text: "♪ If karma's really real ♪" },
+  { time: 109, text: "♪ How am I still here? ♪" },
+  { time: 111, text: "♪ Just seems so unfair ♪" },
+  { time: 114, text: "♪ I could be wrong though ♪" },
+  { time: 117, text: "♪ If there's a point to being good ♪" },
+  { time: 119, text: "♪ Then where's my reward? ♪" },
+  { time: 122, text: "♪ The good die young and poor ♪" },
+  { time: 125, text: "♪ I gave it all I could ♪" },
+  { time: 128, text: "♪ Stuck in this terradome ♪" },
+  { time: 130, text: "♪ All I see is terrible ♪" },
+  { time: 133, text: "♪ Making us hysterical ♪" },
+  { time: 135, text: "♪ There's got to be more, got to be more ♪" },
+  { time: 138, text: "♪ Sick of this head of mine ♪" },
+  { time: 141, text: "♪ Intrusive thoughts, they paralyze ♪" },
+  { time: 144, text: "♪ Nirvana's not as advertised ♪" },
+  { time: 146, text: "♪ There's got to be more, been here before ♪" },
+  { time: 149, text: "♪ Ooh (ooh, ooh) ♪" },
+  { time: 154, text: "♪ Life's better on Saturn ♪" },
+  { time: 159, text: "♪ Got to break this pattern ♪" },
+  { time: 162, text: "♪ Of floating away ♪" },
+  { time: 165, text: "♪ Ooh (ooh, ooh) ♪" },
+  { time: 170, text: "♪ Find something worth saving ♪" },
+  { time: 175, text: "♪ It's all for the taking ♪" },
+  { time: 178, text: "♪ I always say ♪" },
+  { time: 181, text: "♪ I'll be better on Saturn ♪" },
+  { time: 186, text: "♪ None of this matters ♪" },
+  { time: 191, text: "♪ Dreaming of Saturn, oh ♪" }
+]
+
 const SONGS = [
+  {
+    title: "Saturn",
+    artist: "SZA",
+    src: `${import.meta.env.BASE_URL}audio/YTDown_YouTube_SZA-Saturn_Media_V2G8ESoDXm8_009_128k.mp3.mpeg`,
+    duration: 186,
+    lyrics: LYRICS_SATURN
+  },
   {
     title: "Impostor Syndrome",
     artist: "Sidney Gish",
@@ -248,9 +313,43 @@ function GlowBase({ position }) {
 }
 
 // ─────────────────────────────────────────────
+// Komponen: Planet Saturnus (Efek Spesial SZA)
+// ─────────────────────────────────────────────
+function SaturnPlanet() {
+  const planetRef = useRef()
+  const ringRef = useRef()
+
+  useFrame((state) => {
+    if (planetRef.current) {
+      planetRef.current.rotation.y = state.clock.elapsedTime * 0.1
+    }
+    if (ringRef.current) {
+      ringRef.current.rotation.z = state.clock.elapsedTime * -0.05
+    }
+  })
+
+  // Tempatkan planet Saturnus besar di langit/jauh di belakang
+  return (
+    <group position={[0, 4, -10]} rotation={[0.4, 0.2, 0]}>
+      {/* Planet */}
+      <mesh ref={planetRef}>
+        <sphereGeometry args={[2, 32, 32]} />
+        <meshStandardMaterial color="#d4ac0d" roughness={0.7} />
+      </mesh>
+      
+      {/* Cincin Saturnus */}
+      <mesh ref={ringRef} rotation={[Math.PI / 2 + 0.3, 0, 0]}>
+        <ringGeometry args={[2.5, 4.5, 64]} />
+        <meshStandardMaterial color="#fcf3cf" side={2} transparent opacity={0.6} />
+      </mesh>
+    </group>
+  )
+}
+
+// ─────────────────────────────────────────────
 // Komponen: AR Scene
 // ─────────────────────────────────────────────
-function ARScene({ audioRef, onAnchorPlaced, songLyrics }) {
+function ARScene({ audioRef, onAnchorPlaced, songLyrics, showSaturn }) {
   const [anchorPos, setAnchorPos] = useState(null)
   const latestHitPos = useRef(null)
   const requestHitTest = useXRRequestHitTest()
@@ -296,6 +395,7 @@ function ARScene({ audioRef, onAnchorPlaced, songLyrics }) {
   return (
     <>
       <ambientLight intensity={1} />
+      {showSaturn && <SaturnPlanet />}
       
       {!anchorPos && (
         <HitTestReticle onPositionUpdate={handlePositionUpdate} />
@@ -398,7 +498,7 @@ function MusicParticles() {
 // ─────────────────────────────────────────────
 // Komponen: Non-AR Fallback Scene (Magic Window)
 // ─────────────────────────────────────────────
-function FallbackScene({ audioRef, isPlaced, handPosRef, songLyrics, isFist }) {
+function FallbackScene({ audioRef, isPlaced, handPosRef, songLyrics, isFist, showSaturn }) {
   const { camera } = useThree()
   const groupRef = useRef()
 
@@ -426,6 +526,7 @@ function FallbackScene({ audioRef, isPlaced, handPosRef, songLyrics, isFist }) {
       <ambientLight intensity={1} />
       <DeviceOrientationControls />
       <MusicParticles />
+      {showSaturn && <SaturnPlanet />}
       <Mic3D handPosRef={handPosRef} isFist={isFist} />
       <group ref={groupRef}>
         <MinimalLyricText position={[0, 0, 0]} audioRef={audioRef} songLyrics={songLyrics} />
@@ -834,7 +935,12 @@ export default function ARLyricSync() {
           camera={{ position: [0, 0, 0.5], fov: 70 }}
         >
           <XR store={store}>
-            <ARScene audioRef={audioRef} onAnchorPlaced={() => setIsPlaced(true)} songLyrics={currentSong.lyrics} />
+            <ARScene 
+              audioRef={audioRef} 
+              onAnchorPlaced={() => setIsPlaced(true)} 
+              songLyrics={currentSong.lyrics} 
+              showSaturn={currentSong.title === "Saturn"}
+            />
           </XR>
 
           {arSupported === false && fallbackPlaying && (
@@ -844,6 +950,7 @@ export default function ARLyricSync() {
               handPosRef={handPosRef} 
               songLyrics={currentSong.lyrics}
               isFist={detectedGesture === "Closed_Fist"}
+              showSaturn={currentSong.title === "Saturn"}
             />
           )}
         </Canvas>
