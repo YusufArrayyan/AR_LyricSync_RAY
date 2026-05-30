@@ -457,55 +457,7 @@ function ARScene({ audioRef, onAnchorPlaced, songLyrics, showSaturn, showParticl
   )
 }
 
-// ─────────────────────────────────────────────
-// Komponen: Mic Virtual 3D (Muncul saat Genggam Tangan)
-// ─────────────────────────────────────────────
-function Mic3D({ handPosRef, isFist }) {
-  const groupRef = useRef()
-  const { camera } = useThree()
-
-  const [visible, setVisible] = useState(false)
-
-  useEffect(() => {
-    setVisible(isFist)
-  }, [isFist])
-
-  useFrame((state) => {
-    if (groupRef.current && handPosRef.current && visible) {
-      const dir = new Vector3(-handPosRef.current.x * 2.0, handPosRef.current.y * 2.0, -1)
-      dir.normalize().applyQuaternion(camera.quaternion).multiplyScalar(1.5)
-      const targetPos = camera.position.clone().add(dir)
-      groupRef.current.position.lerp(targetPos, 0.4)
-      
-      groupRef.current.position.y += Math.sin(state.clock.elapsedTime * 4) * 0.015
-      groupRef.current.lookAt(camera.position)
-      groupRef.current.rotateX(Math.PI / 4)
-    }
-  })
-
-  if (!visible) return null
-
-  return (
-    <group ref={groupRef}>
-      {/* Kepala Mic */}
-      <mesh position={[0, 0.15, 0]}>
-        <sphereGeometry args={[0.08, 16, 16]} />
-        <meshStandardMaterial color="#888888" wireframe />
-      </mesh>
-      {/* Pegangan Mic */}
-      <mesh position={[0, -0.05, 0]}>
-        <cylinderGeometry args={[0.02, 0.02, 0.25, 16]} />
-        <meshStandardMaterial color="#222222" roughness={0.7} />
-      </mesh>
-      {/* Cincin Spotify */}
-      <mesh position={[0, 0.07, 0]}>
-        <cylinderGeometry args={[0.022, 0.022, 0.02, 16]} />
-        <meshStandardMaterial color="#1db954" emissive="#1db954" emissiveIntensity={2} />
-      </mesh>
-      <pointLight color="#1db954" intensity={2} distance={2} position={[0, 0, 0]} />
-    </group>
-  )
-}
+// Mic3D removed based on user request
 
 // ─────────────────────────────────────────────
 // Komponen: Partikel Vibe VR Musik
@@ -541,7 +493,7 @@ function MusicParticles() {
 // ─────────────────────────────────────────────
 // Komponen: Non-AR Fallback Scene (Magic Window)
 // ─────────────────────────────────────────────
-function FallbackScene({ audioRef, isPlaced, handPosRef, songLyrics, isFist, showSaturn, showParticles, lyricOffset }) {
+function FallbackScene({ audioRef, isPlaced, handPosRef, songLyrics, showSaturn, showParticles, lyricOffset }) {
   const { camera } = useThree()
   const groupRef = useRef()
 
@@ -570,7 +522,6 @@ function FallbackScene({ audioRef, isPlaced, handPosRef, songLyrics, isFist, sho
       <DeviceOrientationControls />
       {showParticles && <MusicParticles />}
       {showSaturn && <SaturnPlanet />}
-      <Mic3D handPosRef={handPosRef} isFist={isFist} />
       <group ref={groupRef}>
         <MinimalLyricText position={[0, 0, 0]} audioRef={audioRef} songLyrics={songLyrics} lyricOffset={lyricOffset} />
       </group>
@@ -679,14 +630,12 @@ export default function ARLyricSync() {
         showFeedback("👍 Play / Pause")
       } else if (gesture === "Pointing_Up") {
         if (audioRef.current) {
-           audioRef.current.volume = Math.min(1, audioRef.current.volume + 0.2)
+           audioRef.current.currentTime = 0
         }
-        showFeedback("👆 Vol Up")
-      } else if (gesture === "Thumb_Down") {
-        if (audioRef.current) {
-           audioRef.current.volume = Math.max(0, audioRef.current.volume - 0.2)
-        }
-        showFeedback("👎 Vol Down")
+        showFeedback("👆 Restart Song")
+      } else if (gesture === "ILoveYou") {
+        toggleCamera()
+        showFeedback("🤟 Switch Camera")
       }
     }
     lastGestureRef.current = gesture
@@ -905,11 +854,10 @@ export default function ARLyricSync() {
             <div className="card-icon" style={{ color: '#1db954' }}><Hand size={24} /></div>
             <h2 style={{ marginBottom: '0.5rem' }}>Gesture Controls</h2>
             <ul style={{ textAlign: 'left', fontSize: '0.9rem', lineHeight: '1.6', paddingLeft: '1rem', color: '#ccc', listStyle: 'none' }}>
-              <li>✊ <b>Fist</b>: Spawn Mic</li>
-              <li>✌️ <b>Peace</b>: Next Song</li>
               <li>👍 <b>Thumb Up</b>: Play / Pause</li>
-              <li>👆 <b>Point Up</b>: Volume Up</li>
-              <li>👎 <b>Thumb Down</b>: Volume Down</li>
+              <li>✌️ <b>Peace</b>: Next Song</li>
+              <li>👆 <b>Point Up</b>: Restart Song</li>
+              <li>🤟 <b>I Love You</b>: Switch Camera</li>
             </ul>
           </div>
         </main>
@@ -1017,7 +965,6 @@ export default function ARLyricSync() {
                 isPlaced={isPlaced} 
                 handPosRef={handPosRef} 
                 songLyrics={currentSong.lyrics}
-                isFist={detectedGesture === "Closed_Fist"}
                 showSaturn={currentSong.title === "Saturn"}
                 showParticles={currentSong.title !== "Saturn"}
                 lyricOffset={currentSong.lyricOffset || 0}
